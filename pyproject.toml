@@ -34,7 +34,6 @@ sphinx-copybutton = ">=0.5.2"
 furo = ">=2023.9.10"
 sphinx-click = ">=5.0.1"
 sphinx = ">=7.2.6"
-sphinxcontrib-mermaid = ">=0.9.2"
 
 [tool.poetry.scripts]
 banquo = "banquo.__main__:main"

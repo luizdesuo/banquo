@@ -1,3 +1,5 @@
+"""Configuration file for the Sphinx documentation builder."""
+
 # Configuration file for the Sphinx documentation builder.
 #
 # This file only contains a selection of the most common options. For a full
@@ -6,9 +8,9 @@
 
 # -- Project information -----------------------------------------------------
 
-project = u"Banquo"
-copyright = u"2024, Luiz Desuó Neto"
-author = u"Luiz Desuó Neto"
+project = "Banquo"
+copyright = "2024, Luiz Desuó Neto"
+author = "Luiz Desuó Neto"
 
 # -- General configuration ---------------------------------------------------
 
@@ -22,7 +24,6 @@ extensions = [
     "sphinx_click",
     "myst_parser",
     "sphinx_copybutton",
-    "sphinxcontrib.mermaid",
 ]
 
 autoapi_dirs = ["../src"]
@@ -49,5 +50,5 @@ autoapi_options = [
 #
 html_theme = "furo"
 html_js_files = [
-   'js/mermaid.js',
+    "js/mermaid.js",
 ]
