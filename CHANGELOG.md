@@ -1,6 +1,17 @@
 # CHANGELOG
 
 
+## v0.1.0 (2024-10-11)
+
+### Build System
+
+* build: add numpyro and arviz dependencies ([`53ad24e`](https://github.com/luizdesuo/banquo/commit/53ad24ed887c5a0193017a9a890fa20c832e1522))
+
+### Features
+
+* feat: add gaussian copula and auxiliary functions ([`a607ef0`](https://github.com/luizdesuo/banquo/commit/a607ef0cd15c514ffd4a0e6abb259a6790203ea9))
+
+
 ## v0.0.0 (2024-10-11)
 
 ### Build System
