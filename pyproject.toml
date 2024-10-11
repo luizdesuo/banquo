@@ -13,6 +13,9 @@ Changelog = "https://github.com/luizdesuo/banquo/releases"
 [tool.poetry.dependencies]
 python = "^3.11"
 click = ">=8.1.7"
+numpyro = {extras = ["cpu", "gpu"], version = ">=0.13.2"}
+arviz = ">=0.17.0"
+
 [tool.poetry.group.dev.dependencies]
 pre-commit = ">=3.5.0"
 nox = ">=2023.4.22"
