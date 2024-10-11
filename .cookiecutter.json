@@ -1,0 +1,21 @@
+{
+    "__package_slug": "banquo",
+    "_checkout": null,
+    "_output_dir": "/home/luiz/Documents/projects",
+    "_repo_dir": "/home/luiz/.cookiecutters/cookiecutter-dinkin-flicka",
+    "_template": "https://github.com/luizdesuo/cookiecutter-dinkin-flicka.git",
+    "author": "Luiz Desu\u00f3 Neto",
+    "copyright_year": "2024",
+    "data_version_control": false,
+    "defensive_programming": false,
+    "development_status": "None",
+    "email": "luizdesuo@gmail.com",
+    "friendly_name": "Banquo",
+    "github_user": "luizdesuo",
+    "license": "MIT",
+    "package_short_description": "a Python package for building Bayesian Nonparanormal models",
+    "package_version": "0.0.0",
+    "project_name": "banquo",
+    "publish": true,
+    "python_version": "3.11"
+}
