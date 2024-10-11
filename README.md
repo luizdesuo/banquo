@@ -2,6 +2,8 @@
 
 a Python package for building Bayesian Nonparanormal models
 
+[![Logo](https://raw.githubusercontent.com/luizdesuo/banquo/main/docs/_static/banquo-logo.png)](https://github.com/luizdesuo/banquo)
+
 [![PyPI](https://img.shields.io/pypi/v/banquo.svg)][pypi status]
 [![Status](https://img.shields.io/pypi/status/banquo.svg)][pypi status]
 [![Python Version](https://img.shields.io/pypi/pyversions/banquo)][pypi status]
@@ -43,17 +45,16 @@ Please see the [Command-line Reference] for details.
 
 ## Contributing
 
-Contributions are very welcome.
-To learn more, see the [Contributor Guide].
+Contributions are very welcome. To learn more, see the [Contributor Guide].
 
 ## License
 
-Distributed under the terms of the [MIT license][license],
-_Banquo_ is free and open source software.
+Distributed under the terms of the [MIT license][license], _Banquo_ is free and open
+source software.
+
 ## Issues
 
-If you encounter any problems,
-please [file an issue] along with a detailed description.
+If you encounter any problems, please [file an issue] along with a detailed description.
 
 ## Credits
 
