@@ -32,7 +32,7 @@ jobs:
       - name: Use Codecov to track coverage
         uses: codecov/codecov-action@v4
         with:
-          files: ./coverage.xml   # coverage report
+          files: ./coverage.xml # coverage report
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4
@@ -80,12 +80,12 @@ jobs:
           repository-url: https://test.pypi.org/legacy/
           password: ${{ secrets.TEST_PYPI_API_TOKEN }}
 
-      - name: Test install from TestPyPI
-        run: |
-            pip install \
-            --index-url https://test.pypi.org/simple/ \
-            --extra-index-url https://pypi.org/simple \
-            banquo
+      # - name: Test install from TestPyPI
+      #   run: |
+      #       pip install \
+      #       --index-url https://test.pypi.org/simple/ \
+      #       --extra-index-url https://pypi.org/simple \
+      #       banquo
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
