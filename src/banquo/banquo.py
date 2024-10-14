@@ -5,16 +5,28 @@
 # Imports #####################################################################
 ###############################################################################
 
-import jax.numpy as jnp
-from jax.typing import ArrayLike
 
+from typing import Any
+
+from array_api_compat import array_namespace
+
+
+###############################################################################
+# Custom types ################################################################
+###############################################################################
+
+
+array = Any
+array.__doc__ = """"Type annotation for array objects.
+                    For more information, please refer to `array-api
+    <https://data-apis.org/array-api/latest/API_specification/array_object.html>`__."""
 
 ###############################################################################
 # Auxiliary functions #########################################################
 ###############################################################################
 
 
-def chol2inv(spd_chol: ArrayLike) -> ArrayLike:
+def chol2inv(spd_chol: array) -> array:
     r"""Invert a SPD square matrix from its Choleski decomposition.
 
     Given a Choleski decomposition :math:`\Sigma` of a matrix :math:`\Sigma`,
@@ -23,15 +35,16 @@ def chol2inv(spd_chol: ArrayLike) -> ArrayLike:
 
     Parameters
     ----------
-    spd_chol : ArrayLike
+    spd_chol : array
         Cholesky factor of the correlation/covariance matrix.
 
     Returns
     -------
-    ArrayLike
+    array
         Inverse matrix.
     """
-    spd_chol_inv = jnp.linalg.inv(spd_chol)
+    xp = array_namespace(spd_chol)
+    spd_chol_inv: array = xp.linalg.inv(spd_chol)
     return spd_chol_inv.T @ spd_chol_inv
 
 
@@ -40,9 +53,7 @@ def chol2inv(spd_chol: ArrayLike) -> ArrayLike:
 ###############################################################################
 
 
-def multi_normal_cholesky_copula_lpdf(
-    marginal: ArrayLike, omega_chol: ArrayLike
-) -> float:
+def multi_normal_cholesky_copula_lpdf(marginal: array, omega_chol: array) -> float:
     r"""Compute multivariate normal copula lpdf (Cholesky parameterisation).
 
     Considering the copula function :math:`C:[0,1]^d\rightarrow [0,1]`
@@ -62,10 +73,10 @@ def multi_normal_cholesky_copula_lpdf(
 
     Parameters
     ----------
-    marginal : ArrayLike
+    marginal : array
         Matrix of outcomes from marginal calculations.
         In this function, :math:`\text{marginal} = \Phi^{-1}(u)`.
-    omega_chol : ArrayLike
+    omega_chol : array
         Cholesky factor of the correlation matrix.
 
     Returns
@@ -73,9 +84,10 @@ def multi_normal_cholesky_copula_lpdf(
     float
         log density of distribution.
     """  # noqa: B950
+    xp = array_namespace(marginal, omega_chol)
     n, d = marginal.shape
-    gammainv = chol2inv(omega_chol)
-    log_density: float = -n * jnp.sum(
-        jnp.log(jnp.diagonal(omega_chol))
-    ) - 0.5 * jnp.sum(jnp.multiply(gammainv - jnp.eye(d), marginal.T @ marginal))
+    precision = chol2inv(omega_chol)
+    log_density: float = -n * xp.sum(xp.log(xp.diagonal(omega_chol))) - 0.5 * xp.sum(
+        xp.multiply(precision - xp.eye(d), marginal.T @ marginal)
+    )
     return log_density
