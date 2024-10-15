@@ -12,14 +12,17 @@ from array_api_compat import array_namespace
 
 
 ###############################################################################
-# Custom types ################################################################
+# Custom types for annotation #################################################
 ###############################################################################
 
 
 array = Any
-array.__doc__ = """"Type annotation for array objects.
-                    For more information, please refer to `array-api
-    <https://data-apis.org/array-api/latest/API_specification/array_object.html>`__."""
+"""Type annotation for array objects.
+
+    For more information, please refer to `array-api
+    <https://data-apis.org/array-api/latest/API_specification/array_object.html>`__.
+"""
+
 
 ###############################################################################
 # Auxiliary functions #########################################################
@@ -44,7 +47,7 @@ def chol2inv(spd_chol: array) -> array:
         Inverse matrix.
     """
     xp = array_namespace(spd_chol)
-    spd_chol_inv: array = xp.linalg.inv(spd_chol)
+    spd_chol_inv = xp.linalg.inv(spd_chol)
     return spd_chol_inv.T @ spd_chol_inv
 
 
