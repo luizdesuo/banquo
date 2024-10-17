@@ -8,7 +8,7 @@
 
 from typing import Any
 
-from array_api_compat import array_namespace
+from array_api_compat import array_namespace, device
 
 
 ###############################################################################
@@ -46,9 +46,61 @@ def chol2inv(spd_chol: array) -> array:
     array
         Inverse matrix.
     """
-    xp = array_namespace(spd_chol)
+    xp = array_namespace(spd_chol)  # Get the array API namespace
     spd_chol_inv = xp.linalg.inv(spd_chol)
     return spd_chol_inv.T @ spd_chol_inv
+
+
+def diag(x: array) -> array:
+    """Generate a diagonal matrix from array `x`.
+
+    Parameters
+    ----------
+    x : array
+        One-dimensional array.
+
+    Returns
+    -------
+    array
+        Diagonal matrix from input array.
+    """
+    xp = array_namespace(x)  # Get the array API namespace
+    n = x.shape[0]
+    res = xp.zeros((n, n), dtype=x.dtype, device=device(x))
+    ii = xp.arange(n, device=device(x))  # Generate indices for the diagonal
+    res[ii, ii] = x  # Set the diagonal elements
+    return res
+
+
+def normalize_covariance(cov: array) -> array:
+    r"""Normalize a covariance matrix.
+
+    Assuming a covariance matrix :math:`\Sigma`, the correlation matrix
+    :math:`\Omega` entries are given by:
+
+    .. math::
+        \Omega_{ij} = \Sigma_{ij}/\sqrt{\Sigma_{ii} \Sigma_{jj}}\,.
+
+    Parameters
+    ----------
+    cov : array
+        SPD covariance matrix
+
+    Returns
+    -------
+    array
+        SPD correlation matrix.
+    """
+    xp = array_namespace(cov)  # Get the array API namespace
+
+    # Get the standard deviations (sqrt of diagonal elements)
+    std_devs = xp.sqrt(xp.diagonal(cov))
+
+    # Create a diagonal matrix with the reciprocal of the standard deviations
+    inv_stddev_matrix = diag(1 / std_devs)
+
+    # Transform covariance matrix to correlation matrix
+    return inv_stddev_matrix @ cov @ inv_stddev_matrix
 
 
 ###############################################################################
@@ -87,10 +139,12 @@ def multi_normal_cholesky_copula_lpdf(marginal: array, omega_chol: array) -> flo
     float
         log density of distribution.
     """  # noqa: B950
-    xp = array_namespace(marginal, omega_chol)
+    xp = array_namespace(marginal, omega_chol)  # Get the array API namespace
     n, d = marginal.shape
     precision = chol2inv(omega_chol)
     log_density: float = -n * xp.sum(xp.log(xp.diagonal(omega_chol))) - 0.5 * xp.sum(
-        xp.multiply(precision - xp.eye(d), marginal.T @ marginal)
+        xp.multiply(
+            precision - xp.eye(d, device=device(precision)), marginal.T @ marginal
+        )
     )
     return log_density
