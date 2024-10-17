@@ -14,6 +14,8 @@ import numpy as nxp  # ! from numpy import array_api as nxp not working
 from hypothesis import strategies as st
 from hypothesis.extra.array_api import make_strategies_namespace
 
+from banquo import diag
+
 
 xps = make_strategies_namespace(nxp)
 
@@ -85,4 +87,4 @@ def spd_square_matrix_builder_float64(draw: Any, size: int) -> st.SearchStrategy
         )
     )
 
-    return U @ nxp.diag(diag_values) @ Vt
+    return U @ diag(diag_values) @ Vt
