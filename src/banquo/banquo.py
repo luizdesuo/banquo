@@ -233,7 +233,7 @@ def divide_ns(x1: array, x2: array) -> array:
     The function relies on the formula:
 
     .. math::
-        \\frac{x_1}{x_2} = \\text{sign}(x_1)\\text{sign}(x_2) \\exp\\left(\\log(\\lvert x_1\\rvert) - \\log(\\lvert x_2\\rvert)\\right)\\,.
+        \frac{x_1}{x_2} = \text{sign}(x_1)\text{sign}(x_2) \exp\left(\log(\lvert x_1\rvert) - \log(\lvert x_2\rvert)\right)\,.
 
     Parameters
     ----------
@@ -261,11 +261,11 @@ def multiply_ns(x1: array, x2: array | None = None) -> array | float:
     r"""Numerically stable multiplication.
 
     Given two arrays of the same shape, `x1` and `x2`, this function
-    performs a numerically stable element-wise division :math:`x_1 \\times x_2`.
+    performs a numerically stable element-wise division :math:`x_1 \times x_2`.
     The function relies on the formula:
 
     .. math::
-        x_1 \\times x_2 = \\text{sign}(x_1)\\text{sign}(x_2) \\exp\\left(\\log(\\lvert x_1\\rvert) + \\log(\\lvert x_2\\rvert)\\right)\\,.
+        x_1 \times x_2 = \text{sign}(x_1)\text{sign}(x_2) \exp\left(\log(\lvert x_1\rvert) + \log(\lvert x_2\rvert)\right)\,.
 
     Parameters
     ----------
@@ -360,19 +360,19 @@ def extract_minmax_parameters(x: array, support: array | None = None) -> array:
     These parameters can be applied into the linear transformation, given by,
 
     .. math::
-        y = \\frac{-a}{b-a} + \\frac{1}{b-a} x,
+        y = \frac{-a}{b-a} + \frac{1}{b-a} x,
 
     to make the data bounded by :math:`[0, 1]`. Where :math:`a` and
     :math:`b`. are given by:
 
     .. math::
 
-        a & = \\max\\{X_{(1)} - \\sqrt{S^2/n}, a'\\},\\\\
-        b & = \\min\\{X_{(n)} + \\sqrt{S^2/n}, b'\\},
+        a & = \max\{X_{(1)} - \sqrt{S^2/n}, a'\},\\
+        b & = \min\{X_{(n)} + \sqrt{S^2/n}, b'\},
 
     with :math:`S^2` representing the sample variance, and
     :math:`X_{(1)}` and :math:`X_{(n)}` denoting the first and last
-    order statistics, respectively. In this formula :math:`x \\in [a', b']`
+    order statistics, respectively. In this formula :math:`x \in [a', b']`
 
 
     Parameters
@@ -382,7 +382,7 @@ def extract_minmax_parameters(x: array, support: array | None = None) -> array:
     support : array | None, optional
         Two-elements array containing the lower and upper bounds
         for the elements, by default None. If None, `support`
-        is the unbounded interval :math:`(-\\infty, \\infty)`.
+        is the unbounded interval :math:`(-\infty, \infty)`.
 
     Returns
     -------
