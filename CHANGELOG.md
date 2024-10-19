@@ -1,6 +1,53 @@
 # CHANGELOG
 
 
+## v0.2.0 (2024-10-19)
+
+### Build System
+
+* build: remove check-docstring-first hook ([`ed18f00`](https://github.com/luizdesuo/banquo/commit/ed18f0089b2cdce1bb1958e0cfcbde381417dd3d))
+
+* build: add array-api tools and hypothesis for testing ([`0544d83`](https://github.com/luizdesuo/banquo/commit/0544d835ebdd728eeb7f21b44ed6f30ca48fac18))
+
+* build: manually add package version ([`7c77eb0`](https://github.com/luizdesuo/banquo/commit/7c77eb000d1362e62f66694d97d4cb78931a4376))
+
+### Continuous Integration
+
+* ci: restore workflow ([`791e319`](https://github.com/luizdesuo/banquo/commit/791e319fa42007f4edf4a7820f331af46880a0d2))
+
+* ci: temporary remove condition to publish into PyPI ([`2620d59`](https://github.com/luizdesuo/banquo/commit/2620d597da0369107daa3043603a4a7ecf42194f))
+
+* ci: remove condition to publish into PyPI ([`5c7a9ef`](https://github.com/luizdesuo/banquo/commit/5c7a9effa8919baf70b7af223986993135dda5b2))
+
+* ci: temporary remove Test install from TestPyPI ([`886408b`](https://github.com/luizdesuo/banquo/commit/886408bc8b888aff15a6f220b43c550b07a746aa))
+
+* ci: add PSR configuration ([`239dea2`](https://github.com/luizdesuo/banquo/commit/239dea2a8f150cb5f1ed33cdd58bcf8b734135d6))
+
+### Features
+
+* feat: add auxiliary functions, data transform functions their custom errors ([`3f82e1a`](https://github.com/luizdesuo/banquo/commit/3f82e1a79f3c5a7602d021d89245473201a0aaab))
+
+* feat: add auxiliary functions ([`18eabb3`](https://github.com/luizdesuo/banquo/commit/18eabb37157d8248349036cc4e46b070a9dc3ce2))
+
+* feat: extend the existing function to support array-api ([`738c2c5`](https://github.com/luizdesuo/banquo/commit/738c2c5e3d22d9ca7e79eec06935ef40a630098f))
+
+### Refactoring
+
+* refactor: add array info to documentation ([`c5150fc`](https://github.com/luizdesuo/banquo/commit/c5150fc1cee78896c05783733c765100142ecd8d))
+
+### Testing
+
+* test: add tests for usual cases of auxiliary and data transform functions ([`1455083`](https://github.com/luizdesuo/banquo/commit/1455083165a2fc5a11af152287cfb13ea06a0884))
+
+* test: add functional test for multi_normal_cholesky_copula_lpdf function ([`c2ce33c`](https://github.com/luizdesuo/banquo/commit/c2ce33cd692a1cfd643488b2039114ff63486f5b))
+
+* test: change diag function to array-api standard ([`3ba49ff`](https://github.com/luizdesuo/banquo/commit/3ba49fff5e61f7c460f1a19aa5937766bf093f99))
+
+* test: add functional test for chol2inv function ([`3dc099c`](https://github.com/luizdesuo/banquo/commit/3dc099c88e0a98334f41a5f4ff4be82d2afb6bbd))
+
+* test: add module to include array builders strategies ([`7c6ca1b`](https://github.com/luizdesuo/banquo/commit/7c6ca1bfb5177799205db17d77f9ec583bba6ae9))
+
+
 ## v0.1.0 (2024-10-11)
 
 ### Build System
