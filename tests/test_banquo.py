@@ -13,6 +13,7 @@ import pytest
 from array_api_compat import array_namespace, device
 from hypothesis import given, settings
 from hypothesis import strategies as st
+from scipy.special import logsumexp as scipy_logsumexp
 from scipy.stats import multivariate_normal, norm
 
 from banquo import (
@@ -23,6 +24,7 @@ from banquo import (
     chol2inv,
     divide_ns,
     homographic_ns,
+    logsumexp,
     minmax_normalization,
     multi_normal_cholesky_copula_lpdf,
     multiply_ns,
@@ -211,6 +213,43 @@ def test_homographic_ns_float64(x: array) -> None:
     assert nxp.allclose(res[res_not_inf], homographic[res_not_inf])
 
 
+@no_type_check
+@settings(deadline=None)
+@given(x=spd_matrix_builder_float64)
+def test_logsumexp_equals_scipy_implementation_float64(x: array) -> None:
+    """Test if :func:`logsumexp` is close to scipy implementation.
+
+    Parameters
+    ----------
+    x : array
+        Elements to calculate logsumexp.
+    """
+    xp = array_namespace(x)  # Get the array API namespace
+    x = nxp.asarray(x)  # Convert to numpy
+
+    rng = nxp.random.default_rng()
+
+    # Transform covariance into a correlation matrix
+    corr = normalize_covariance(x)
+
+    d = corr.shape[0]  # number of dimensions
+    mean = nxp.zeros(d)  # mean vector
+
+    # Sample data from multivariate normal
+    samples = rng.multivariate_normal(mean=mean, cov=corr, size=10)
+
+    # Distributions for multivariate normal
+    joint_dist = multivariate_normal(mean=mean, cov=corr)
+
+    # Joint distribution lpdf
+    joint_lpdf = joint_dist.logpdf(samples)
+
+    res = scipy_logsumexp(joint_lpdf)
+    lse = nxp.asarray(logsumexp(xp.asarray(joint_lpdf, device=device(samples))))
+
+    assert nxp.isclose(res, lse)
+
+
 ###############################################################################
 # Test data transform #########################################################
 ###############################################################################
@@ -376,10 +415,10 @@ def test_multi_normal_cholesky_copula_lpdf_equals_multivariate_gaussian_float64(
     marginals_dist = norm(loc=0, scale=1)
 
     # Sum of marginals lpdf
-    marginals_lpdf = nxp.sum(nxp.log(marginals_dist.pdf(samples)))
+    marginals_lpdf = nxp.sum(marginals_dist.logpdf(samples))
 
     # Joint distribution lpdf
-    joint_lpdf = nxp.log(joint_dist.pdf(samples))
+    joint_lpdf = joint_dist.logpdf(samples)
 
     # Here \Phi^{-1}(\Phi(x)) = x
     copula_lpdf = nxp.asarray(
