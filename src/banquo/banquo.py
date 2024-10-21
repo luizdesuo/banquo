@@ -156,7 +156,7 @@ def normalize_covariance(cov: array) -> array:
     return inv_stddev_matrix @ cov @ inv_stddev_matrix
 
 
-def std_ns(x: array, axis: int | None = None) -> array | float:
+def std_ns(x: array, axis: int | None = None, keepdims: bool = False) -> array | float:
     """Numerically stable calculation of standard deviation.
 
     If the standard deviation tends to infinity,
@@ -171,6 +171,9 @@ def std_ns(x: array, axis: int | None = None) -> array | float:
         is performed. If axis is negative it counts from the last
         to the first axis, by default None will sum all of
         the elements of the input array.
+    keepdims : bool, optional
+        If True, retains reduced axes as dimensions with size 1,
+        by default False. If False, the dimensions are removed.
 
     Returns
     -------
@@ -178,15 +181,16 @@ def std_ns(x: array, axis: int | None = None) -> array | float:
         An array with the same shape as a, with the specified axis removed.
         If a is a 0-d array, or if axis is None, a scalar is returned.
         If an output array is specified, a reference to out is returned.
+        If keepdims is True, retains reduced axes as dimensions with size 1.
     """
     xp = array_namespace(x)  # Get the array API namespace
 
-    x_std = xp.std(x, axis=axis)
+    x_std = xp.std(x, axis=axis, keepdims=keepdims)
 
-    if xp.isinf(x_std):
+    if xp.any(xp.isinf(x_std)):
         # Compute Q1 (25th percentile) and Q3 (75th percentile)
-        q1 = xp.percentile(x, 25, axis=axis)
-        q3 = xp.percentile(x, 75, axis=axis)
+        q1 = xp.percentile(x, 25, axis=axis, keepdims=keepdims)
+        q3 = xp.percentile(x, 75, axis=axis, keepdims=keepdims)
 
         # Compute IQR (Interquartile Range)
         iqr = q3 - q1
@@ -347,6 +351,54 @@ def add_intercept_column(x: array, const: float | int = 1) -> array:
         (const * xp.ones((n, 1), dtype=x.dtype, device=device(x)), x[:, xp.newaxis]),
         axis=1,
     )
+
+
+def logsumexp(x: array, axis: int | None = None, keepdims: bool = False) -> array:
+    """Compute the log of the sum of exponentials of input elements over a given axis.
+
+    Parameters
+    ----------
+    x : array
+        Input array to compute the logsumexp over.
+    axis : int | None, optional
+        Axis or axes along which to perform the reduction, by default None.
+        If None, the operation is performed over all elements.
+    keepdims : bool, optional
+        If True, retains reduced axes as dimensions with size 1,
+        by default False. If False, the dimensions are removed.
+
+    Returns
+    -------
+    array
+        An array with the same type as `x` containing the log of the
+        sum of exponentials. If `keepdims` is True, the result will
+        have the same number of dimensions as the input. Otherwise, the
+        reduced dimensions are removed.
+
+    Notes
+    -----
+    This implementation follows a numerically stable approach to compute
+    the log of the sum of exponentials by:
+    - Shifting input values by the maximum along the specified axis.
+    - Computing the exponentials of the shifted values to avoid
+    overflow or underflow.
+    """
+    xp = array_namespace(x)  # Get the array API namespace
+
+    # Step 1: Compute the max value along the specified axis to stabilize the computation
+    max_val = xp.max(x, axis=axis, keepdims=keepdims)
+
+    # Step 2: Subtract the max value from the input array to stabilize the computation
+    shifted_x = x - max_val
+
+    # Step 3: Compute the sum of the exponentials of the shifted array
+    exp_sum = xp.sum(xp.exp(shifted_x), axis=axis, keepdims=keepdims)
+
+    # Step 4: Take the log of the sum and add back the max_val
+    log_sum_exp = xp.log(exp_sum)
+
+    # Return the final logsumexp result
+    return log_sum_exp + max_val
 
 
 ###############################################################################
