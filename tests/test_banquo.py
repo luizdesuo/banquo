@@ -10,9 +10,9 @@ from typing import no_type_check
 
 import numpy as nxp  # ! from numpy import array_api as nxp not working
 import pytest
+from array_api_compat import array_namespace, device
 from hypothesis import given, settings
 from hypothesis import strategies as st
-from hypothesis.extra.array_api import make_strategies_namespace
 from scipy.stats import multivariate_normal, norm
 
 from banquo import (
@@ -30,10 +30,16 @@ from banquo import (
     std_ns,
 )
 
+from .conftest import xps  # Parameterization in conftest.py for CLI
 from .hypothesis_arrays_strategy import FLOAT64, spd_square_matrix_builder_float64
 
 
-xps = make_strategies_namespace(nxp)
+###############################################################################
+# Constants  ##################################################################
+###############################################################################
+
+
+WIDTH = 32
 
 
 ###############################################################################
@@ -60,9 +66,12 @@ def test_chol2inv_equals_inverting_spd_matrix_float64(x: array) -> None:
     x : array
         SPD matrix.
     """
+    xp = array_namespace(x)  # Get the array API namespace
+    x = nxp.asarray(x)  # Convert to numpy
+
     x_inv = nxp.linalg.inv(x)
     spd_chol = nxp.linalg.cholesky(x)
-    x_chol2inv = chol2inv(spd_chol)
+    x_chol2inv = nxp.asarray(chol2inv(xp.asarray(spd_chol, device=device(x))))
     assert nxp.allclose(x_inv, x_chol2inv)
 
 
@@ -72,7 +81,7 @@ def test_chol2inv_equals_inverting_spd_matrix_float64(x: array) -> None:
     xps.arrays(
         dtype=FLOAT64,
         shape=(10,),
-        elements=st.floats(allow_infinity=False, allow_nan=False),
+        elements=st.floats(allow_infinity=False, allow_nan=False, width=WIDTH),
         unique=True,
     )
 )
@@ -84,8 +93,11 @@ def test_std_ns_not_inf_float64(x: array) -> None:
     x : array
         Elements to calculate std.
     """
+    xp = array_namespace(x)  # Get the array API namespace
+    x = nxp.asarray(x)  # Convert to numpy
+
     res = nxp.std(x)
-    x_robust = std_ns(x)
+    x_robust = nxp.asarray(std_ns(xp.asarray(x, device=device(x))))
     res_not_inf = ~nxp.isinf(res)
     if res_not_inf:
         assert nxp.isclose(x_robust, res)
@@ -97,13 +109,13 @@ def test_std_ns_not_inf_float64(x: array) -> None:
     xps.arrays(
         dtype=FLOAT64,
         shape=(10,),
-        elements=st.floats(allow_infinity=False, allow_nan=False),
+        elements=st.floats(allow_infinity=False, allow_nan=False, width=WIDTH),
         unique=True,
     ),
     xps.arrays(
         dtype=FLOAT64,
         shape=(10,),
-        elements=st.floats(allow_infinity=False, allow_nan=False),
+        elements=st.floats(allow_infinity=False, allow_nan=False, width=WIDTH),
         unique=True,
     ),
 )
@@ -117,8 +129,14 @@ def test_divide_ns_not_inf_float64(x1: array, x2: array) -> None:
     x2 : array
         Denominator.
     """
+    xp = array_namespace(x1, x2)  # Get the array API namespace
+    x1 = nxp.asarray(x1)  # Convert to numpy
+    x2 = nxp.asarray(x2)  # Convert to numpy
+
     res = x1 / x2
-    div_robust = divide_ns(x1, x2)
+    div_robust = nxp.asarray(
+        divide_ns(xp.asarray(x1, device=device(x1)), xp.asarray(x2, device=device(x1)))
+    )
     res_not_inf = ~nxp.isinf(res)
     res_not_nan = ~nxp.isnan(res)
     assert nxp.allclose(
@@ -132,13 +150,13 @@ def test_divide_ns_not_inf_float64(x1: array, x2: array) -> None:
     xps.arrays(
         dtype=FLOAT64,
         shape=(10,),
-        elements=st.floats(allow_infinity=False, allow_nan=False),
+        elements=st.floats(allow_infinity=False, allow_nan=False, width=WIDTH),
         unique=True,
     ),
     xps.arrays(
         dtype=FLOAT64,
         shape=(10,),
-        elements=st.floats(allow_infinity=False, allow_nan=False),
+        elements=st.floats(allow_infinity=False, allow_nan=False, width=WIDTH),
         unique=True,
     ),
 )
@@ -152,8 +170,16 @@ def test_multiply_ns_not_inf_float64(x1: array, x2: array) -> None:
     x2 : array
         Factor.
     """
+    xp = array_namespace(x1, x2)  # Get the array API namespace
+    x1 = nxp.asarray(x1)  # Convert to numpy
+    x2 = nxp.asarray(x2)  # Convert to numpy
+
     res = x1 * x2
-    mul_robust = multiply_ns(x1, x2)
+    mul_robust = nxp.asarray(
+        multiply_ns(
+            xp.asarray(x1, device=device(x1)), xp.asarray(x2, device=device(x1))
+        )
+    )
     res_not_inf = ~nxp.isinf(res)
     assert nxp.allclose(res[res_not_inf], mul_robust[res_not_inf])
 
@@ -164,7 +190,7 @@ def test_multiply_ns_not_inf_float64(x1: array, x2: array) -> None:
     xps.arrays(
         dtype=FLOAT64,
         shape=(10,),
-        elements=st.floats(allow_infinity=False, allow_nan=False),
+        elements=st.floats(allow_infinity=False, allow_nan=False, width=WIDTH),
         unique=True,
     )
 )
@@ -176,8 +202,11 @@ def test_homographic_ns_float64(x: array) -> None:
     x : array
         Elements to perform homographic transform.
     """
+    xp = array_namespace(x)  # Get the array API namespace
+    x = nxp.asarray(x)  # Convert to numpy
+
     res = 1 / (1 + x)
-    homographic = homographic_ns(x)
+    homographic = nxp.asarray(homographic_ns(xp.asarray(x, device=device(x))))
     res_not_inf = ~nxp.isinf(res)
     assert nxp.allclose(res[res_not_inf], homographic[res_not_inf])
 
@@ -193,7 +222,7 @@ def test_homographic_ns_float64(x: array) -> None:
     xps.arrays(
         dtype=FLOAT64,
         shape=(10,),
-        elements=st.floats(allow_infinity=False, allow_nan=False),
+        elements=st.floats(allow_infinity=False, allow_nan=False, width=WIDTH),
         unique=True,
     )
 )
@@ -205,7 +234,8 @@ def test_minmax_normalization_default_support_float64(x: array) -> None:
     x : array
         Elements to be transformed.
     """
-    x_transf = minmax_normalization(x)
+
+    x_transf = nxp.asarray(minmax_normalization(x))
 
     x_transfmin = nxp.min(x_transf)
     x_transfmax = nxp.max(x_transf)
@@ -225,13 +255,13 @@ def test_minmax_normalization_default_support_float64(x: array) -> None:
     xps.arrays(
         dtype=FLOAT64,
         shape=(10,),
-        elements=st.floats(allow_infinity=False, allow_nan=False),
+        elements=st.floats(allow_infinity=False, allow_nan=False, width=WIDTH),
         unique=True,
     ),
     xps.arrays(
         dtype=FLOAT64,
         shape=(2,),
-        elements=st.floats(allow_nan=False),
+        elements=st.floats(allow_nan=False, width=WIDTH),
         unique=True,
     ),
 )
@@ -246,6 +276,9 @@ def test_minmax_normalization_any_support_float64(x: array, support: array) -> N
         Two-elements array containing the lower and upper bounds
         for the elements.
     """
+    xp = array_namespace(x, support)  # Get the array API namespace
+    x = nxp.asarray(x)  # Convert to numpy
+    support = nxp.asarray(support)  # Convert to numpy
 
     support = nxp.sort(support)
 
@@ -257,17 +290,37 @@ def test_minmax_normalization_any_support_float64(x: array, support: array) -> N
     # Check if data range exceeds support's boundary
     if condition_lower and condition_upper:
         with pytest.raises(DataRangeExceedsSupportBoundError):
-            x_transf = minmax_normalization(x, support=support)
+            x_transf = nxp.asarray(
+                minmax_normalization(
+                    xp.asarray(x, device=device(x)),
+                    support=xp.asarray(support, device=device(x)),
+                )
+            )
     # Check if data minimum exceeds support's lower bound
     elif x_range[0] < support[0]:
         with pytest.raises(DataMinExceedsSupportLowerBoundError):
-            x_transf = minmax_normalization(x, support=support)
+            x_transf = nxp.asarray(
+                minmax_normalization(
+                    xp.asarray(x, device=device(x)),
+                    support=xp.asarray(support, device=device(x)),
+                )
+            )
     # Check if data maximum exceeds support's upper bound
     elif x_range[1] > support[1]:
         with pytest.raises(DataMaxExceedsSupportUpperBoundError):
-            x_transf = minmax_normalization(x, support=support)
+            x_transf = nxp.asarray(
+                minmax_normalization(
+                    xp.asarray(x, device=device(x)),
+                    support=xp.asarray(support, device=device(x)),
+                )
+            )
     else:
-        x_transf = minmax_normalization(x, support=support)
+        x_transf = nxp.asarray(
+            minmax_normalization(
+                xp.asarray(x, device=device(x)),
+                support=xp.asarray(support, device=device(x)),
+            )
+        )
 
         x_transfmin = nxp.min(x_transf)
         x_transfmax = nxp.max(x_transf)
@@ -301,6 +354,8 @@ def test_multi_normal_cholesky_copula_lpdf_equals_multivariate_gaussian_float64(
     x : array
         SPD matrix.
     """
+    xp = array_namespace(x)  # Get the array API namespace
+    x = nxp.asarray(x)  # Convert to numpy
 
     rng = nxp.random.default_rng()
 
@@ -327,7 +382,12 @@ def test_multi_normal_cholesky_copula_lpdf_equals_multivariate_gaussian_float64(
     joint_lpdf = nxp.log(joint_dist.pdf(samples))
 
     # Here \Phi^{-1}(\Phi(x)) = x
-    copula_lpdf = multi_normal_cholesky_copula_lpdf(samples[nxp.newaxis, :], corr_chol)
+    copula_lpdf = nxp.asarray(
+        multi_normal_cholesky_copula_lpdf(
+            xp.asarray(samples[nxp.newaxis, :], device=device(samples)),
+            xp.asarray(corr_chol, device=device(samples)),
+        )
+    )
 
     # copula lpdf + marginals_lpdf = joint_lpdf
     assert nxp.isclose(copula_lpdf, joint_lpdf - marginals_lpdf)

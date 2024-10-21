@@ -12,12 +12,18 @@ from typing import Any, no_type_check
 
 import numpy as nxp  # ! from numpy import array_api as nxp not working
 from hypothesis import strategies as st
-from hypothesis.extra.array_api import make_strategies_namespace
 
 from banquo import diag
 
+from .conftest import xps  # Parameterization in conftest.py for CLI
 
-xps = make_strategies_namespace(nxp)
+
+###############################################################################
+# Constants  ##################################################################
+###############################################################################
+
+
+WIDTH = 32
 
 
 ###############################################################################
@@ -69,7 +75,7 @@ def spd_square_matrix_builder_float64(draw: Any, size: int) -> st.SearchStrategy
         xps.arrays(
             dtype=FLOAT64,
             shape=(size, 2 * size),
-            elements=st.floats(min_value=0, max_value=1),
+            elements=st.floats(min_value=0, max_value=1, width=WIDTH),
             unique=True,
         )
     )
@@ -82,7 +88,7 @@ def spd_square_matrix_builder_float64(draw: Any, size: int) -> st.SearchStrategy
         xps.arrays(
             dtype=FLOAT64,
             shape=(size),
-            elements=st.floats(min_value=1, max_value=2),
+            elements=st.floats(min_value=1, max_value=2, width=WIDTH),
             unique=True,
         )
     )
