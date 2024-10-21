@@ -26,8 +26,11 @@ jobs:
       - name: Safety checks
         run: poetry run nox -s safety
 
-      - name: Run tests
+      - name: Run tests standard array api
         run: poetry run nox -s tests
+
+      - name: Run tests with jax-numpy array api
+        run: poetry run nox -s tests -- --array-api jax-numpy
 
       - name: Use Codecov to track coverage
         uses: codecov/codecov-action@v4
