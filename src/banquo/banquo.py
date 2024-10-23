@@ -7,7 +7,7 @@
 
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Protocol
 
 from array_api_compat import array_namespace, device
 
@@ -23,6 +23,103 @@ array = Any
     For more information, please refer to `array-api
     <https://data-apis.org/array-api/latest/API_specification/array_object.html>`__.
 """
+
+
+class BetaProtocol(Protocol):
+    """A protocol that defines the interface for a Beta distribution.
+
+    This protocol outlines the required attributes and methods for working
+    with a Beta distribution, including the log probability density function
+    (lpdf), probability density function (pdf),cumulative distribution
+    function (cdf) and inverse cumulative distribution function (icdf)
+    or quantile function.
+
+    Parameters
+    ----------
+    a : array
+        The first shape parameter (alpha) of the Beta distribution.
+        It is an array to allow for vectorized operations over multiple
+        distributions.
+    b: array
+        The second shape parameter (beta) of the Beta distribution.
+        Similar to `a`, it is an array to allow for vectorized operations
+        over multiple distributions.
+
+    Methods
+    -------
+    lpdf(x: array) -> array
+        Calculate the log-probability density function (log-pdf) of the Beta
+        distribution for the input array `x`. Returns an array of log-pdf
+        values corresponding to each element in `x`.
+
+    pdf(x: array) -> array
+        Calculate the probability density function (pdf) of the Beta
+        distribution for the input array `x`. Returns an array of pdf
+        values corresponding to each element in `x`.
+
+    cdf(x: array) -> array
+        Calculate the cumulative distribution function (cdf) of the Beta
+        distribution for the input array `x`. Returns an array of cdf
+        values corresponding to each element in `x`.
+
+    icdf(x: array) -> array
+        Calculate the inverse cumulative distribution function (quantile function)
+        of the Beta distribution for the input array `x`. Returns an array of
+        quantiles corresponding to the cumulative probabilities in `x`.
+
+    Notes
+    -----
+    - The Beta distribution is a continuous probability distribution defined on
+      the interval [0, 1].
+    - The `a` and `b` parameters define the shape of the distribution. For instance:
+        - `a = b = 1` gives a uniform distribution.
+        - `a > b` gives a distribution skewed toward 1.
+        - `a < b` gives a distribution skewed toward 0.
+    - All methods operate on arrays, allowing for efficient vectorized
+      computation of the log-pdf, pdf, cdf, and icdf across multiple
+      Beta distributions and samples.
+
+    Example
+    -------
+    >>> import numpy as np
+    >>> from scipy.stats import beta
+    >>> class ScipyBeta(BetaProtocol):
+    >>>     def __init__(self, a, b):
+    >>>         self.a = a
+    >>>         self.b = b
+    >>>
+    >>>     def lpdf(self, x):
+    >>>         return beta(self.a, self.b).logpdf(x)
+    >>>
+    >>>     def pdf(self, x):
+    >>>         return beta(self.a, self.b).pdf(x)
+    >>>
+    >>>     def cdf(self, x):
+    >>>         return beta(self.a, self.b).cdf(x)
+    >>>
+    >>>     def icdf(self, x):
+    >>>         return beta.ppf(self.a, self.b)(x)
+    >>>
+    >>> beta_dist = ScipyBeta(a=np.array([2]), b=np.array([5]))
+    >>> x = np.array([0.2, 0.5])
+    >>> beta_dist.lpdf(x)
+    array([ 0.89918526, -0.06453852])
+    """
+
+    a: array
+    b: array
+
+    def lpdf(self, x: array) -> array:
+        """Calculate the log probability density function of the beta distribution."""
+
+    def pdf(self, x: array) -> array:
+        """Calculate the probability density function of the beta distribution."""
+
+    def cdf(self, x: array) -> array:
+        """Calculate the cumulative distribution function of the beta distribution."""
+
+    def icdf(self, x: array) -> array:
+        """Calculate the quantile function of the beta distribution."""
 
 
 ###############################################################################
@@ -472,10 +569,10 @@ def extract_minmax_parameters(x: array, support: array | None = None) -> array:
     if condition_lower and condition_upper:
         raise DataRangeExceedsSupportBoundError(support, x_range)
     # Check if data minimum exceeds support's lower bound
-    elif x_range[0] < support[0]:
+    elif condition_lower:
         raise DataMinExceedsSupportLowerBoundError(support, x_range)
     # Check if data maximum exceeds support's upper bound
-    elif x_range[1] > support[1]:
+    elif condition_upper:
         raise DataMaxExceedsSupportUpperBoundError(support, x_range)
 
     n = x.shape[0]
@@ -590,3 +687,222 @@ def multi_normal_cholesky_copula_lpdf(marginal: array, omega_chol: array) -> flo
         )
     )
     return log_density
+
+
+###############################################################################
+# Marginal modeling ###########################################################
+###############################################################################
+
+
+def bernstein_lpdf(beta: type[BetaProtocol], x: array, w: array) -> array:
+    """Compute the lpdf for a Bernstein-Dirichlet polynomial model.
+
+    This function evaluates the lpdf of a weighted sum of Beta distributions,
+    where each Beta distribution forms a basis function in the Bernstein
+    polynomial. The weights (simplex) for each basis function are
+    specified by `w`, and the inputs to the Beta distributions are given by `x`.
+
+    Parameters
+    ----------
+    beta : type[BetaProtocol]
+        A class implementing the protocol that defines the interface
+        for a Beta distribution for each basis function, see
+        :class:`BetaProtocol`. It should accept two arguments
+        `a = j` and `b = k_j`, where:
+            - `j`: index of the basis function.
+            - `k_j`: the complement index for the Beta distribution's
+              second shape parameter.
+    x : array
+        An array of shape `(n, d)` where `n` is the number of samples,
+        and `d` is the number of dimensions. If `x` is one-dimensional
+        with shape `(n,)`, it will be reshaped to `(n, 1)`. Each element
+        represents a sample to be evaluated under the Bernstein polynomial
+        model.
+    w : array
+        An array of shape `(d, k)` where `d` is the number of dimensions
+        and `k` is the number of basis functions (order of the Bernstein
+        polynomial). The elements of `w` are the weights  assigned to each of
+        the `k` basis functions in the corresponding dimension.
+        If `w` is one-dimensional with shape `(k,)`, it will be reshaped
+        to `(1, k)`.
+
+    Returns
+    -------
+    array
+        The log-probability density function evaluated at each sample in `x`,
+        returned as an array of shape `(d, n)`, where `d` is the number of dimensions and
+        `n` is the number of samples. Each entry corresponds to the log-probability
+        of a sample for a specific dimension in the Bernstein polynomial model with
+        parameters `w`.
+
+    Notes
+    -----
+    - This function leverages broadcasting and reshaping to ensure that the log-pdf
+      of the Beta distributions and the weight vectors can be combined element-wise
+      across dimensions and samples.
+    - The Beta distributions are parameterized by `j` and `k_j`, which vary across
+      the number of basis functions `k`. The :func:`BetaProtocol.lpdf(x)` method
+      computes the log-pdf for the inputs in `x`.
+    - The :func:`logsumexp` function is used to aggregate the weighted
+      log-probabilities across the basis functions, ensuring numerical stability.
+    """
+    xp = array_namespace(x, w)  # Get the array API namespace
+
+    # Ensure x has shape (n, d) where d is number of
+    # dimensions and n is number of samples
+    if x.ndim == 1:
+        x = x[:, xp.newaxis]  # Convert to shape (n, 1) for single dimension
+
+    # Ensure w has shape (d, k) where d is number of
+    # dimensions and k is number of basis functions
+    if w.ndim == 1:
+        x = x[xp.newaxis, :]  # Convert to shape (1, k) for single dimension
+
+    d, k = w.shape  # w has shape (d, k) for d dimensions and k basis functions
+
+    j = xp.arange(1, k + 1, device=device(x))  # j = 1, 2, ..., k
+    k_j = k - j + 1  # k-j+1 for each j
+
+    # Expand j and k_j for broadcasting over dimensions and samples
+    j = j[xp.newaxis, :, xp.newaxis]  # Shape: (1, k, 1)
+    k_j = k_j[xp.newaxis, :, xp.newaxis]  # Shape: (1, k, 1)
+
+    # Beta distribution parameterized for each dimension and sample
+    # The beta parameters are broadcasted over dimensions
+    beta_dist = beta(j, k_j)  # type: ignore [call-arg]
+
+    # Compute log-pdf of the beta distribution per dimension
+    beta_lpdf = beta_dist.lpdf(x[:, xp.newaxis, :])  # Shape: (n, k, d)
+
+    # Log of the weights, w has shape (d, k)
+    w_log = xp.log(w)[:, :, xp.newaxis]  # Shape: (d, k, 1)
+
+    # Add log-weights to the log-pdf
+    weighted_lpdf = w_log.T + beta_lpdf  # Shape: (n, k, d)
+
+    # Compute log-sum-exp over the n samples for each dimension and basis function
+    return xp.squeeze(
+        logsumexp(weighted_lpdf, axis=1, keepdims=True), 1
+    )  # Shape: (n, d)
+
+
+def bernstein_pdf(beta: type[BetaProtocol], x: array, w: array) -> array:
+    """Compute the pdf for a Bernstein-Dirichlet polynomial model.
+
+    This function evaluates the pdf of a weighted sum of Beta distributions,
+    where each Beta distribution forms a basis function in the Bernstein
+    polynomial. The weights (simplex) for each basis function are
+    specified by `w`, and the inputs to the Beta distributions are given by `x`.
+    This function exponentiate the :func:`bernstein_lpdf`.
+
+    Parameters
+    ----------
+    beta : type[BetaProtocol]
+        A class implementing the protocol that defines the interface
+        for a Beta distribution for each basis function, see
+        :class:`BetaProtocol`. It should accept two arguments
+        `a = j` and `b = k_j`, where:
+            - `j`: index of the basis function.
+            - `k_j`: the complement index for the Beta distribution's
+              second shape parameter.
+    x : array
+        An array of shape `(n, d)` where `n` is the number of samples,
+        and `d` is the number of dimensions. If `x` is one-dimensional
+        with shape `(n,)`, it will be reshaped to `(n, 1)`. Each element
+        represents a sample to be evaluated under the Bernstein polynomial
+        model.
+    w : array
+        An array of shape `(d, k)` where `d` is the number of dimensions
+        and `k` is the number of basis functions (order of the Bernstein
+        polynomial). The elements of `w` are the weights  assigned to each of
+        the `k` basis functions in the corresponding dimension.
+        If `w` is one-dimensional with shape `(k,)`, it will be reshaped
+        to `(1, k)`.
+
+    Returns
+    -------
+    array
+        The probability density function evaluated at each sample in `x`,
+        returned as an array of shape `(d, n)`, where `d` is the number of dimensions and
+        `n` is the number of samples. Each entry corresponds to the log-probability
+        of a sample for a specific dimension in the Bernstein polynomial model with
+        parameters `w`.
+    """
+    xp = array_namespace(x, w)  # Get the array API namespace
+
+    return xp.exp(bernstein_lpdf(beta, x, w))
+
+
+def bernstein_cdf(beta: type[BetaProtocol], x: array, w: array) -> array:
+    """Compute the cdf for a Bernstein-Dirichlet polynomial model.
+
+    This function evaluates the cdf of a weighted sum of Beta distributions,
+    where each Beta distribution forms a basis function in the Bernstein
+    polynomial. The weights (simplex) for each basis function are
+    specified by `w`, and the inputs to the Beta distributions are given by `x`.
+
+    Parameters
+    ----------
+    beta : type[BetaProtocol]
+        A class implementing the protocol that defines the interface
+        for a Beta distribution for each basis function, see
+        :class:`BetaProtocol`. It should accept two arguments
+        `a = j` and `b = k_j`, where:
+            - `j`: index of the basis function.
+            - `k_j`: the complement index for the Beta distribution's
+              second shape parameter.
+    x : array
+        An array of shape `(n, d)` where `n` is the number of samples,
+        and `d` is the number of dimensions. If `x` is one-dimensional
+        with shape `(n,)`, it will be reshaped to `(n, 1)`. Each element
+        represents a sample to be evaluated under the Bernstein polynomial
+        model.
+    w : array
+        An array of shape `(d, k)` where `d` is the number of dimensions
+        and `k` is the number of basis functions (order of the Bernstein
+        polynomial). The elements of `w` are the weights  assigned to each of
+        the `k` basis functions in the corresponding dimension.
+        If `w` is one-dimensional with shape `(k,)`, it will be reshaped
+        to `(1, k)`.
+
+    Returns
+    -------
+    array
+        The cumulative distribution function evaluated at each sample in `x`,
+        returned as an array of shape `(d, n)`, where `d` is the number of dimensions and
+        `n` is the number of samples. Each entry corresponds to the log-probability
+        of a sample for a specific dimension in the Bernstein polynomial model with
+        parameters `w`.
+    """
+    xp = array_namespace(x, w)  # Get the array API namespace
+
+    # Ensure x has shape (n, d) where d is number of
+    # dimensions and n is number of samples
+    if x.ndim == 1:
+        x = x[:, xp.newaxis]  # Convert to shape (n, 1) for single dimension
+
+    # Ensure w has shape (d, k) where d is number of
+    # dimensions and k is number of basis functions
+    if w.ndim == 1:
+        x = x[xp.newaxis, :]  # Convert to shape (1, k) for single dimension
+
+    d, k = w.shape  # w has shape (d, k) for d dimensions and k basis functions
+
+    j = xp.arange(1, k + 1, device=device(x))  # j = 1, 2, ..., k
+    k_j = k - j + 1  # k-j+1 for each j
+
+    # Expand j and k_j for broadcasting over dimensions and samples
+    j = j[xp.newaxis, :, xp.newaxis]  # Shape: (1, k, 1)
+    k_j = k_j[xp.newaxis, :, xp.newaxis]  # Shape: (1, k, 1)
+
+    # Beta distribution parameterized for each dimension and sample
+    # The beta parameters are broadcasted over dimensions
+    beta_dist = beta(j, k_j)  # type: ignore [call-arg]
+
+    # Compute log-pdf of the beta distribution per dimension
+    beta_cdf = beta_dist.cdf(x[:, xp.newaxis, :])  # Shape: (n, k, d)
+
+    # Expand w for broadcasting over dimensions and samples
+    w = w[:, :, xp.newaxis]  # Shape: (d, k, 1)
+
+    return xp.sum(w.T * beta_cdf, axis=1)  # Shape: (n, d)
