@@ -730,7 +730,7 @@ def bernstein_lpdf(beta: type[BetaProtocol], x: array, w: array) -> array:
     -------
     array
         The log-probability density function evaluated at each sample in `x`,
-        returned as an array of shape `(d, n)`, where `d` is the number of dimensions and
+        returned as an array of shape `(n, d)`, where `d` is the number of dimensions and
         `n` is the number of samples. Each entry corresponds to the log-probability
         of a sample for a specific dimension in the Bernstein polynomial model with
         parameters `w`.
@@ -823,7 +823,7 @@ def bernstein_pdf(beta: type[BetaProtocol], x: array, w: array) -> array:
     -------
     array
         The probability density function evaluated at each sample in `x`,
-        returned as an array of shape `(d, n)`, where `d` is the number of dimensions and
+        returned as an array of shape `(n, d)`, where `d` is the number of dimensions and
         `n` is the number of samples. Each entry corresponds to the log-probability
         of a sample for a specific dimension in the Bernstein polynomial model with
         parameters `w`.
@@ -869,7 +869,7 @@ def bernstein_cdf(beta: type[BetaProtocol], x: array, w: array) -> array:
     -------
     array
         The cumulative distribution function evaluated at each sample in `x`,
-        returned as an array of shape `(d, n)`, where `d` is the number of dimensions and
+        returned as an array of shape `(n, d)`, where `d` is the number of dimensions and
         `n` is the number of samples. Each entry corresponds to the log-probability
         of a sample for a specific dimension in the Bernstein polynomial model with
         parameters `w`.
