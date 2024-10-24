@@ -83,7 +83,7 @@ class BetaProtocol(Protocol):
     -------
     >>> import numpy as np
     >>> from scipy.stats import beta
-    >>> class ScipyBeta(BetaProtocol):
+    >>> class ScipyBeta:
     >>>     def __init__(self, a, b):
     >>>         self.a = a
     >>>         self.b = b
