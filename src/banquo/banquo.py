@@ -756,7 +756,7 @@ def bernstein_lpdf(beta: type[BetaProtocol], x: array, w: array) -> array:
     # Ensure w has shape (d, k) where d is number of
     # dimensions and k is number of basis functions
     if w.ndim == 1:
-        x = x[xp.newaxis, :]  # Convert to shape (1, k) for single dimension
+        w = w[xp.newaxis, :]  # Convert to shape (1, k) for single dimension
 
     d, k = w.shape  # w has shape (d, k) for d dimensions and k basis functions
 
@@ -884,7 +884,7 @@ def bernstein_cdf(beta: type[BetaProtocol], x: array, w: array) -> array:
     # Ensure w has shape (d, k) where d is number of
     # dimensions and k is number of basis functions
     if w.ndim == 1:
-        x = x[xp.newaxis, :]  # Convert to shape (1, k) for single dimension
+        w = w[xp.newaxis, :]  # Convert to shape (1, k) for single dimension
 
     d, k = w.shape  # w has shape (d, k) for d dimensions and k basis functions
 
