@@ -52,9 +52,11 @@ class BetaProtocol(Protocol):
     - The Beta distribution is a continuous probability distribution defined on
       the interval [0, 1].
     - The `a` and `b` parameters define the shape of the distribution. For instance:
-        - `a = b = 1` gives a uniform distribution.
-        - `a > b` gives a distribution skewed toward 1.
-        - `a < b` gives a distribution skewed toward 0.
+
+      - `a = b = 1` gives a uniform distribution.
+      - `a > b` gives a distribution skewed toward 1.
+      - `a < b` gives a distribution skewed toward 0.
+
     - All methods operate on arrays, allowing for efficient vectorized
       computation of the log-pdf, pdf, cdf, and icdf across multiple
       Beta distributions and samples.
@@ -459,9 +461,10 @@ def logsumexp(x: array, axis: int | None = None, keepdims: bool = False) -> arra
     -----
     This implementation follows a numerically stable approach to compute
     the log of the sum of exponentials by:
-    - Shifting input values by the maximum along the specified axis.
-    - Computing the exponentials of the shifted values to avoid
-      overflow or underflow.
+
+     - Shifting input values by the maximum along the specified axis.
+     - Computing the exponentials of the shifted values to avoid
+       overflow or underflow.
     """
     xp = array_namespace(x)  # Get the array API namespace
 
@@ -712,91 +715,157 @@ def multi_normal_cholesky_copula_lpdf(marginal: array, omega_chol: array) -> flo
 
 
 def shape_handle_x(x: array) -> array:
-    """Handle the shape of the observations `x`.
+    """
+    Reshape observations `x` for use with Bernstein functions.
 
-    This auxiliary function reshapes the array of observations so that
-    it can be consumed in the functions: :func:`bernstein_lpdf`,
-    :func:`bernstein_pdf` and :func:`bernstein_cdf` by leveraging
-    broadcasting.
-
+    This function reshapes the input array `x` to ensure compatibility
+    with functions such as :func:`bernstein_lpdf`, :func:`bernstein_pdf`,
+    and :func:`bernstein_cdf`, leveraging broadcasting and vectorized
+    operations.
 
     Parameters
     ----------
     x : array
-        An array of shape `(n, d)` where `n` is the number of samples,
-        and `d` is the number of dimensions of the system, or the number of
-        variables. Each element represents an observation for fitting the
-        Bernstein polynomial model.
+        An array of observations, with shape `(n, d)` where `n` is the
+        number of samples, and `d` is the number of dimensions. If
+        `x` is one-dimensional, it represents `n` samples with shape `(n,)`.
 
     Returns
     -------
     array
-        An array `x` reshaped for Bernstein functions.
-            - If `x` is one-dimensional with shape `(n,)`, it will be
-              reshaped to `(1, 1, n, 1, 1)`.
-            - If it is two-dimensional with shape `(n, d)`, it will be
-              reshaped to `(1, 1, n, 1, d)`.
+        Reshaped array of `x` suitable for Bernstein functions.
+
+         - If `x` has shape `(n,)`, it will be reshaped to `(1, 1, n, 1, 1)`.
+         - If `x` has shape `(n, d)`, it will be reshaped to `(1, 1, n, 1, d)`.
 
     Raises
     ------
     ValueError
-        If the number of dimensions are greater than 2.
+        If `x` has more than 2 dimensions.
     """
-    # c, s, n, k, d
     if x.ndim == 1:
         return x[
             None, None, :, None, None
-        ]  # Convert to shape (n, 1) for single dimension
+        ]  # Shape (1, 1, n, 1, 1) for single dimension
     elif x.ndim == 2:
-        return x[None, None, :, None, :]
+        return x[None, None, :, None, :]  # Shape (1, 1, n, 1, d)
     else:
-        raise ValueError(f"Input x has too many dimensions ({x.ndim} > 2)")
+        raise ValueError(
+            f"Input `x` has too many dimensions (ndim={x.ndim})."
+            f" Expected shape (n,) or (n, d), but received {x.shape}."
+        )
 
 
 def shape_handle_wT(w: array) -> array:  # noqa: N802
-    """Handle the shape of the weights `w`.
+    """
+    Reshape and transpose weights `w` for use with Bernstein functions.
 
-    This auxiliary function reshapes the array of weights so that
-    it can be consumed in the functions: :func:`bernstein_lpdf`,
-    :func:`bernstein_pdf` and :func:`bernstein_cdf` by leveraging
-    broadcasting. Additionally, this function transpose `w`
-    before expanding dimensions.
+    This function reshapes the weights array `w` and transposes it for
+    compatibility with functions like :func:`bernstein_lpdf`, :func:`bernstein_pdf`,
+    and :func:`bernstein_cdf`, enabling broadcasting.
 
     Parameters
     ----------
     w : array
-        An array of shape `(d, k)` where `k` is the number of basis
-        functions (order of the Bernstein polynomial) and `d` is the number
-        of dimensions of the system, or the number of variables. The
-        elements of `w` are the weights  assigned to each of the `k` basis
-        functions in the corresponding dimension.
+        An array of weights with shape `(d, k)`, where `d` is the number of
+        dimensions, and `k` is the number of basis functions. If `w` is one-dimensional,
+        it represents `k` basis functions with shape `(k,)`.
 
     Returns
     -------
     array
-        An array `w` reshaped for Bernstein functions.
-            - If `w` is one-dimensional with shape `(k,)`, it will be
-              reshaped to `(1, 1, 1, k, 1)`.
-            - If it is two-dimensional with shape `(d, k)`, it will be
-              reshaped to `(1, 1, 1, k, d)`.
-            - If the weights are the product of a MCMC sampling algorithm,
-              i.e., it has dimensions `(c, s, 1, k, d)`, it can be
-              used directly into Bernstein functions.
+        Reshaped and transposed array of `w` for Bernstein functions.
+
+         - If `w` has shape `(k,)`, it will be reshaped to `(1, 1, 1, k, 1)`.
+         - If `w` has shape `(d, k)`, it will be reshaped to `(1, 1, 1, k, d)`.
 
     Raises
     ------
     ValueError
-        If the number of dimensions are greater than 2.
+        If `w` has more than 2 dimensions.
     """
-    # c, s, n, k, d
     if w.ndim == 1:
-        return w.T[
+        return w[
             None, None, None, :, None
-        ]  # Convert to shape (k, 1) for single dimension
+        ]  # Shape (1, 1, 1, k, 1) for single dimension
     elif w.ndim == 2:
-        return w.T[None, None, None, :, :]  # (k, d)
+        return w.T[None, None, None, :, :]  # Shape (1, 1, 1, k, d)
     else:
-        raise ValueError(f"Input x has too many dimensions ({w.ndim} > 2)")
+        raise ValueError(
+            f"Input `w` has too many dimensions (ndim={w.ndim})."
+            f" Expected shape (k,) or (d, k), but received {w.shape}."
+        )
+
+
+def shape_handle_wT_posterior(w: array, chains: bool = False) -> array:  # noqa: N802
+    """
+    Reshape posterior weights `w` with optional chain handling for MCMC output.
+
+    This function reshapes and transposes the input weights array `w`
+    based on whether MCMC chains are included. It ensures compatibility
+    with functions like :func:`bernstein_lpdf`, :func:`bernstein_pdf`,
+    and :func:`bernstein_cdf`.
+
+    Parameters
+    ----------
+    w : array
+        An array of weights with shape `(s, k)` or `(s, d, k)` when `chains=False`.
+        If `chains=True`, `w` should have shape `(c, s, k)` or `(c, s, d, k)`.
+
+    chains : bool, optional
+        Specifies if `w` includes MCMC chain data, by default False.
+
+    Returns
+    -------
+    array
+        Reshaped array `w` suitable for Bernstein functions.
+
+         - If `chains=True`, reshapes `w` to `(c, s, 1, k, 1)` or `(c, s, 1, k, d)`.
+         - If `chains=False`, reshapes `w` to `(1, s, 1, k, 1)` or `(1, s, 1, k, d)`.
+
+    Raises
+    ------
+    ValueError
+        If `w` has an incompatible number of dimensions.
+    """
+    if chains:
+        if w.ndim < 3:
+            raise ValueError(
+                "Input `w` must have at least 3 dimensions when `chains=True`;"
+                f" received shape {w.shape} (ndim={w.ndim})."
+                " Expected shape (c, s, k) or (c, s, d, k)."
+            )
+        elif w.ndim == 3:
+            return w[:, :, None, :, None]  # Shape (c, s, 1, k, 1)
+        elif w.ndim == 4:
+            xp = array_namespace(w)
+            return xp.transpose(w, axes=(0, 1, 3, 2))[
+                :, :, None, :, :
+            ]  # Shape (c, s, 1, k, d)
+        else:
+            raise ValueError(
+                f"Input `w` has too many dimensions (ndim={w.ndim}) for `chains=True`."
+                f" Expected shape (c, s, k) or (c, s, d, k), but received {w.shape}."
+            )
+    else:
+        if w.ndim < 2:
+            raise ValueError(
+                "Input `w` must have at least 2 dimensions when `chains=False`;"
+                f" received shape {w.shape} (ndim={w.ndim})."
+                " Expected shape (s, k) or (s, d, k)."
+            )
+        elif w.ndim == 2:
+            return w[None, :, None, :, None]  # Shape (1, s, 1, k, 1)
+        elif w.ndim == 3:
+            xp = array_namespace(w)
+            return xp.transpose(w, axes=(0, 2, 1))[
+                None, :, None, :, :
+            ]  # Shape (1, s, 1, k, d)
+        else:
+            raise ValueError(
+                f"Input `w` has too many dimensions (ndim={w.ndim}) for `chains=False`."
+                f"Expected shape (s, k) or (s, d, k), but received {w.shape}."
+            )
 
 
 def bernstein_lpdf(
@@ -816,23 +885,29 @@ def bernstein_lpdf(
         for a Beta distribution for each basis function, see
         :class:`BetaProtocol`. It should accept two arguments
         `a = j` and `b = k_j`, where:
-            - `j`: index of the basis function.
-            - `k_j`: the complement index for the Beta distribution's
-              second shape parameter.
+
+         - `j`: index of the basis function.
+         - `k_j`: the complement index for the Beta distribution's
+           second shape parameter.
+
     x : array
         An array of shape `(1, 1, n, 1, d)`, where:
-            - `n` is the number of samples.
-            - `d` is the number of dimensions
+
+         - `n` is the number of samples.
+         - `d` is the number of dimensions.
+
         Each element represents an observation for fitting the
         Bernstein polynomial model. The other dimensions
         assigned with 1 are for array broadcasting,
         see :func:`shape_handle_x`.
     w : array
         An array of shape `(c, s, 1, k, d)`, where:
-            - `c` is the number of MCMC chains.
-            - `s` is the number of MCMC samples per chain.
-            - `k` is the number of basis functions.
-            - `d` is the number of dimensions.
+
+         - `c` is the number of MCMC chains.
+         - `s` is the number of MCMC samples per chain.
+         - `k` is the number of basis functions.
+         - `d` is the number of dimensions.
+
         The elements of `w` are the weights  assigned to each of
         the `k` basis functions. The other dimensions
         assigned with 1 are for array broadcasting,
@@ -849,10 +924,12 @@ def bernstein_lpdf(
     array
         The log-probability density function evaluated at each observation in `x`,
         returned as an array of shape `(c, s, n, 1, d)`, where:
-            - `c` is the number of MCMC chains.
-            - `s` is the number of MCMC samples per chain.
-            - `n` is the number of samples.
-            - `d` is the number of dimensions.
+
+         - `c` is the number of MCMC chains.
+         - `s` is the number of MCMC samples per chain.
+         - `n` is the number of samples.
+         - `d` is the number of dimensions.
+
         Each entry corresponds to the lpdf of a sample for a specific
         dimension in the Bernstein polynomial model with parameters `w`. In case
         of `keepdims` is `False`, the axes of length one will be removed.
@@ -932,23 +1009,29 @@ def bernstein_pdf(
         for a Beta distribution for each basis function, see
         :class:`BetaProtocol`. It should accept two arguments
         `a = j` and `b = k_j`, where:
-            - `j`: index of the basis function.
-            - `k_j`: the complement index for the Beta distribution's
-              second shape parameter.
+
+         - `j`: index of the basis function.
+         - `k_j`: the complement index for the Beta distribution's
+           second shape parameter.
+
     x : array
         An array of shape `(1, 1, n, 1, d)`, where:
-            - `n` is the number of samples.
-            - `d` is the number of dimensions
+
+         - `n` is the number of samples.
+         - `d` is the number of dimensions.
+
         Each element represents an observation for fitting the
         Bernstein polynomial model. The other dimensions
         assigned with 1 are for array broadcasting,
         see :func:`shape_handle_x`.
     w : array
         An array of shape `(c, s, 1, k, d)`, where:
-            - `c` is the number of MCMC chains.
-            - `s` is the number of MCMC samples per chain.
-            - `k` is the number of basis functions.
-            - `d` is the number of dimensions.
+
+         - `c` is the number of MCMC chains.
+         - `s` is the number of MCMC samples per chain.
+         - `k` is the number of basis functions.
+         - `d` is the number of dimensions.
+
         The elements of `w` are the weights  assigned to each of
         the `k` basis functions. The other dimensions
         assigned with 1 are for array broadcasting,
@@ -965,10 +1048,12 @@ def bernstein_pdf(
     array
         The probability density function evaluated at each observation in `x`,
         returned as an array of shape `(c, s, n, 1, d)`, where:
-            - `c` is the number of MCMC chains.
-            - `s` is the number of MCMC samples per chain.
-            - `n` is the number of samples.
-            - `d` is the number of dimensions.
+
+         - `c` is the number of MCMC chains.
+         - `s` is the number of MCMC samples per chain.
+         - `n` is the number of samples.
+         - `d` is the number of dimensions.
+
         Each entry corresponds to the pdf of a sample for a specific
         dimension in the Bernstein polynomial model with parameters `w`. In case
         of `keepdims` is `False`, the axes of length one will be removed.
@@ -1000,23 +1085,29 @@ def bernstein_cdf(
         for a Beta distribution for each basis function, see
         :class:`BetaProtocol`. It should accept two arguments
         `a = j` and `b = k_j`, where:
-            - `j`: index of the basis function.
-            - `k_j`: the complement index for the Beta distribution's
-              second shape parameter.
+
+         - `j`: index of the basis function.
+         - `k_j`: the complement index for the Beta distribution's
+           second shape parameter.
+
     x : array
         An array of shape `(1, 1, n, 1, d)`, where:
-            - `n` is the number of samples.
-            - `d` is the number of dimensions
+
+         - `n` is the number of samples.
+         - `d` is the number of dimensions.
+
         Each element represents an observation for fitting the
         Bernstein polynomial model. The other dimensions
         assigned with 1 are for array broadcasting,
         see :func:`shape_handle_x`.
     w : array
         An array of shape `(c, s, 1, k, d)`, where:
-            - `c` is the number of MCMC chains.
-            - `s` is the number of MCMC samples per chain.
-            - `k` is the number of basis functions.
-            - `d` is the number of dimensions.
+
+         - `c` is the number of MCMC chains.
+         - `s` is the number of MCMC samples per chain.
+         - `k` is the number of basis functions.
+         - `d` is the number of dimensions.
+
         The elements of `w` are the weights  assigned to each of
         the `k` basis functions. The other dimensions
         assigned with 1 are for array broadcasting,
@@ -1033,10 +1124,12 @@ def bernstein_cdf(
     array
         The cumulative distribution function evaluated at each observation in `x`,
         returned as an array of shape `(c, s, n, 1, d)`, where:
-            - `c` is the number of MCMC chains.
-            - `s` is the number of MCMC samples per chain.
-            - `n` is the number of samples.
-            - `d` is the number of dimensions.
+
+         - `c` is the number of MCMC chains.
+         - `s` is the number of MCMC samples per chain.
+         - `n` is the number of samples.
+         - `d` is the number of dimensions.
+
         Each entry corresponds to the cdf of a sample for a specific
         dimension in the Bernstein polynomial model with parameters `w`. In case
         of `keepdims` is `False`, the axes of length one will be removed.

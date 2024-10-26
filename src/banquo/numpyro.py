@@ -68,7 +68,7 @@ class NumpyroBeta:
 ###############################################################################
 
 
-def bernstein_log_prob(x: array, zeta: array) -> None:
+def bernstein_density(x: array, zeta: array) -> None:
     """Compute the Bernstein polynomial-based lpdf in a Numpyro model.
 
     This function samples weights `w` from a Dirichlet distribution with
