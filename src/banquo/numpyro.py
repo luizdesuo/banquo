@@ -12,7 +12,7 @@ import numpyro
 from array_api_compat import array_namespace
 from numpyro.distributions import Beta, Dirichlet
 
-from banquo import array, bernstein_lpdf
+from banquo import array, bernstein_lpdf, shape_handle_wT, shape_handle_x
 
 
 ###############################################################################
@@ -118,4 +118,7 @@ def bernstein_log_prob(x: array, zeta: array) -> None:
     w = numpyro.sample("w", Dirichlet(zeta))
 
     # Add a factor that affects the joint log-probability
-    numpyro.factor("bernstein_lpdf", bernstein_lpdf(NumpyroBeta, x, w))
+    numpyro.factor(
+        "bernstein_lpdf",
+        bernstein_lpdf(NumpyroBeta, shape_handle_x(x), shape_handle_wT(w)),
+    )
