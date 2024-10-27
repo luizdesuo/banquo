@@ -871,12 +871,28 @@ def shape_handle_wT_posterior(w: array, chains: bool = False) -> array:  # noqa:
 def bernstein_lpdf(
     beta: type[BetaProtocol], x: array, w: array, keepdims: bool = False
 ) -> array:
-    """Compute the lpdf for a Bernstein-Dirichlet polynomial model.
+    r"""Compute the lpdf for a Bernstein-Dirichlet polynomial model.
 
     This function evaluates the lpdf of a weighted sum of Beta distributions,
     where each Beta distribution forms a basis function in the Bernstein
     polynomial. The weights (simplex) for each basis function are
     specified by `w`, and the inputs to the Beta distributions are given by `x`.
+
+    Considering the beta density function,
+
+    .. math::
+        b(x \mid \alpha, \beta) = \frac{\Gamma(\alpha+\beta)}{\Gamma(\alpha)\Gamma(\beta)} \, x^{\alpha-1}(1-x)^{\beta-1},
+
+    with :math:`\alpha = j` and :math:`\beta=k-j+1` for :math:`k` basis functions
+    and :math:`j \in \{1, \ldots k\}`. The Bernstein density approximation
+    is given by:
+
+    .. math::
+        p(x) \approx \mathbf{w}^\mathrm{T} \mathbf{b}(x),
+
+    with :math:`\mathbf{b}(x) = (b_{1,k}(x), \ldots, b_{k,k}(x))^\mathrm{T}`
+    and weights :math:`\mathbf{w}` are elements in a k-dimensional simplex.
+    This function returns :math:`\log(\mathbf{w}^\mathrm{T} \mathbf{b}(x))`.
 
     Parameters
     ----------
@@ -949,7 +965,7 @@ def bernstein_lpdf(
       computes the log-pdf for the inputs in `x`.
     - The :func:`logsumexp` function is used to aggregate the weighted
       log-probabilities across the basis functions, ensuring numerical stability.
-    """
+    """  # noqa: B950
     xp = array_namespace(x, w)  # Get the array API namespace
 
     # Shape: (c, s, n, k, d)
@@ -994,13 +1010,28 @@ def bernstein_lpdf(
 def bernstein_pdf(
     beta: type[BetaProtocol], x: array, w: array, keepdims: bool = False
 ) -> array:
-    """Compute the pdf for a Bernstein-Dirichlet polynomial model.
+    r"""Compute the pdf for a Bernstein-Dirichlet polynomial model.
 
     This function evaluates the pdf of a weighted sum of Beta distributions,
     where each Beta distribution forms a basis function in the Bernstein
     polynomial. The weights (simplex) for each basis function are
     specified by `w`, and the inputs to the Beta distributions are given by `x`.
     This function exponentiate the :func:`bernstein_lpdf`.
+
+    Considering the beta density function,
+
+    .. math::
+        b(x \mid \alpha, \beta) = \frac{\Gamma(\alpha+\beta)}{\Gamma(\alpha)\Gamma(\beta)} \, x^{\alpha-1}(1-x)^{\beta-1},
+
+    with :math:`\alpha = j` and :math:`\beta=k-j+1` for :math:`k` basis functions
+    and :math:`j \in \{1, \ldots k\}`. The Bernstein density approximation
+    is given by:
+
+    .. math::
+        p(x) \approx \mathbf{w}^\mathrm{T} \mathbf{b}(x),
+
+    with :math:`\mathbf{b}(x) = (b_{1,k}(x), \ldots, b_{k,k}(x))^\mathrm{T}`
+    and weights :math:`\mathbf{w}` are elements in a k-dimensional simplex.
 
     Parameters
     ----------
@@ -1062,7 +1093,7 @@ def bernstein_pdf(
     ------
     ValueError
         If `x` or `w` don't have exactly 5 dimensions.
-    """
+    """  # noqa: B950
     xp = array_namespace(x, w)  # Get the array API namespace
 
     return xp.exp(bernstein_lpdf(beta, x, w, keepdims))
@@ -1071,12 +1102,27 @@ def bernstein_pdf(
 def bernstein_cdf(
     beta: type[BetaProtocol], x: array, w: array, keepdims: bool = False
 ) -> array:
-    """Compute the cdf for a Bernstein-Dirichlet polynomial model.
+    r"""Compute the cdf for a Bernstein-Dirichlet polynomial model.
 
     This function evaluates the cdf of a weighted sum of Beta distributions,
     where each Beta distribution forms a basis function in the Bernstein
     polynomial. The weights (simplex) for each basis function are
     specified by `w`, and the inputs to the Beta distributions are given by `x`.
+
+    Considering the beta cumulative distribution function,
+
+    .. math::
+        B(x \mid \alpha, \beta) = \int_0^x \frac{\Gamma(\alpha+\beta)}{\Gamma(\alpha)\Gamma(\beta)} \, x^{\alpha-1}(1-x)^{\beta-1} \, \mathrm{d}z,
+
+    with :math:`\alpha = j` and :math:`\beta=k-j+1` for :math:`k` basis functions
+    and :math:`j \in \{1, \ldots k\}`. The Bernstein cdf approximation
+    is given by:
+
+    .. math::
+        p(x) \approx \mathbf{w}^\mathrm{T} \mathbf{B}(x),
+
+    with :math:`\mathbf{B}(x) = (B_{1,k}(x), \ldots, B_{k,k}(x))^\mathrm{T}`
+    and weights :math:`\mathbf{w}` are elements in a k-dimensional simplex.
 
     Parameters
     ----------
@@ -1138,7 +1184,7 @@ def bernstein_cdf(
     ------
     ValueError
         If `x` or `w` don't have exactly 5 dimensions.
-    """
+    """  # noqa: B950
     xp = array_namespace(x, w)  # Get the array API namespace
 
     # Shape: (c, s, n, k, d)
