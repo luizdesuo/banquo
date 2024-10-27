@@ -1,6 +1,73 @@
 # CHANGELOG
 
 
+## v0.3.0 (2024-10-27)
+
+### Build System
+
+* build(deps): bump python-semantic-release/python-semantic-release
+
+Bumps [python-semantic-release/python-semantic-release](https://github.com/python-semantic-release/python-semantic-release) from 9.10.1 to 9.11.0.
+- [Release notes](https://github.com/python-semantic-release/python-semantic-release/releases)
+- [Changelog](https://github.com/python-semantic-release/python-semantic-release/blob/master/CHANGELOG.md)
+- [Commits](https://github.com/python-semantic-release/python-semantic-release/compare/v9.10.1...v9.11.0)
+
+---
+updated-dependencies:
+- dependency-name: python-semantic-release/python-semantic-release
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com> ([`3c6d3fb`](https://github.com/luizdesuo/banquo/commit/3c6d3fb0fac0f3eff3db3bc2a336441e45cc8081))
+
+### Continuous Integration
+
+* ci: remove step for jax-numpy array-api ([`7105a71`](https://github.com/luizdesuo/banquo/commit/7105a7187425c945b14a9c9af9ea5dfc4c90271b))
+
+* ci: run tests for jax-numpy array api ([`e4534f5`](https://github.com/luizdesuo/banquo/commit/e4534f59ad7f4f277d7d4169de573f4e99b7afd7))
+
+### Documentation
+
+* docs: add bernstein approximation equations ([`b448193`](https://github.com/luizdesuo/banquo/commit/b448193c872f1e3f0b3ad4447cc6bfa124bbf3de))
+
+* docs: fix BetaProtocol example should not subclass a protocol ([`6265af2`](https://github.com/luizdesuo/banquo/commit/6265af2f426571748592b4bb3043e0d8828638ab))
+
+* docs: fix output dimension of returns on bernstein functions ([`ce41600`](https://github.com/luizdesuo/banquo/commit/ce4160035fac0fe49200c571d687dfb839a954e8))
+
+* docs: fix math equations ([`7d818d4`](https://github.com/luizdesuo/banquo/commit/7d818d4fe756c7b469617b97cce6689fb25e2d60))
+
+### Features
+
+* feat: add shape handling functions for compatibility with bernstein functions ([`e1b2a40`](https://github.com/luizdesuo/banquo/commit/e1b2a40c77c507694242b32e62be08f86ba295ab))
+
+* feat: expand bernstein functions to multiple purpose (MCMC and posterior reconstruction) ([`0d74487`](https://github.com/luizdesuo/banquo/commit/0d74487781bf34ef8dd381210fec025a7f0718b7))
+
+* feat: add numpyro module, build marginal models and beta protocol ([`722e073`](https://github.com/luizdesuo/banquo/commit/722e07309722c26a4d84bfd9cdad560c90d871cf))
+
+* feat: add bernstein-based marginal modeling functions ([`fad6648`](https://github.com/luizdesuo/banquo/commit/fad6648c0e64faed957df19938d3620f0e9490c5))
+
+* feat: add logsumexp using array-api standard ([`9412c14`](https://github.com/luizdesuo/banquo/commit/9412c142cc71ed2d00fc80f1f7915adc1b19427d))
+
+### Fixes
+
+* fix: error when expanding weights dimension ([`11275a2`](https://github.com/luizdesuo/banquo/commit/11275a259959495bce8aa2c63557cd00cd6b2088))
+
+### Testing
+
+* test: add integration test to bernstein density and functions ([`cca046d`](https://github.com/luizdesuo/banquo/commit/cca046d1d99efe472f44ec1e2a939c8f4c2b0fb3))
+
+* test: add test to logsumexp ([`c3053bd`](https://github.com/luizdesuo/banquo/commit/c3053bdb9a201773ab495910ff064ea7d20bc619))
+
+* test: add configuration for tests array-api from CLI and adjust the other modules ([`0f785d1`](https://github.com/luizdesuo/banquo/commit/0f785d1698a907ca8cd2a79956f8f71a97f0c731))
+
+### Unknown
+
+* Merge pull request #4 from luizdesuo/dependabot/github_actions/python-semantic-release/python-semantic-release-9.11.0
+
+build(deps): bump python-semantic-release/python-semantic-release from 9.10.1 to 9.11.0 ([`843b397`](https://github.com/luizdesuo/banquo/commit/843b397b92d88f4df22b0960b54ce02ef96b0aa3))
+
+
 ## v0.2.0 (2024-10-19)
 
 ### Build System
