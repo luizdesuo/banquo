@@ -961,7 +961,7 @@ def bernstein_lpdf(
       of the Beta distributions and the weight vectors can be combined element-wise
       across dimensions and samples.
     - The Beta distributions are parameterized by `j` and `k_j`, which vary across
-      the number of basis functions `k`. The :func:`BetaProtocol.lpdf(x)` method
+      the number of basis functions `k`. The :func:`BetaProtocol.lpdf` method
       computes the log-pdf for the inputs in `x`.
     - The :func:`logsumexp` function is used to aggregate the weighted
       log-probabilities across the basis functions, ensuring numerical stability.
