@@ -16,6 +16,7 @@ import numpyro
 from hypothesis import given, settings
 from hypothesis import strategies as st
 from jax import random
+from numpyro.distributions import Dirichlet
 from numpyro.infer import MCMC, NUTS
 from scipy import stats
 from scipy.spatial.distance import jensenshannon
@@ -28,7 +29,7 @@ from banquo import (
     shape_handle_wT_posterior,
     shape_handle_x,
 )
-from banquo.numpyro import bernstein_density
+from banquo.numpyro import Bernstein
 
 
 ###############################################################################
@@ -117,7 +118,11 @@ def bernstein_density_model(x: array, k: int) -> None:
 
     zeta = 0.3 * jnp.ones((d, k))
 
-    bernstein_density(x, zeta)
+    # Define the Bernstein-Dirichlet distribution
+    w = numpyro.sample("w", Dirichlet(zeta))
+
+    # Sample x from the Bernstein-Dirichlet density
+    numpyro.sample("marginals", Bernstein(w), obs=x)
 
 
 ###############################################################################
