@@ -203,7 +203,10 @@ def diag(x: array) -> array:
     n = x.shape[0]
     res = xp.zeros((n, n), dtype=x.dtype, device=device(x))
     ii = xp.arange(n, device=device(x))  # Generate indices for the diagonal
-    res[ii, ii] = x  # Set the diagonal elements
+    if is_jax_array(res):
+        res = res.at[ii, ii].set(x)
+    else:
+        res[ii, ii] = x  # Set the diagonal elements
     return res
 
 
