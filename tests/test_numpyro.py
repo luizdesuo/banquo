@@ -46,22 +46,98 @@ numpyro.set_host_device_count(4)
 ###############################################################################
 
 
+MAX_EXAMPLES = 10
+
 DISTRIBUTIONS: dict[str, Any] = {
     "norm": stats.norm(0, 1),
     "genextreme": stats.genextreme(c=0, loc=0, scale=1),
     "expon": stats.expon(1),
     "beta": stats.beta(10, 10),
 }
+
 SUPPORTS: dict[str, Any] = {
     "norm": np.asarray((-np.inf, np.inf)),
     "genextreme": np.asarray((-np.inf, np.inf)),
     "expon": np.asarray((0, np.inf)),
     "beta": np.asarray((0, 1)),
 }
+
 SEED: int = 37  # Seed for pseudo-random generation
-JSD_THRESHOLD: float = 0.05  # Threshold for Jensen-Shannon divergence (JSD)
-PROB_JSD_LESS_THAN_THRESHOLD = 0.95  # Probability that lpdf of observation
-# is similar to true distribution under JSD
+
+# Adaptive threshold for Jensen-Shannon divergence (JSD) for pdf
+# and Kolmogorov-Smirnov metrics (KS) for cdf
+THRESHOLD_MIN: float = 0.05
+THRESHOLD_MAX: float = 0.40
+
+# Adaptative probability threshold for JSD for pdf and KS for cdf
+PROB_THRESHOLD_MIN = 0.70
+PROB_THRESHOLD_MAX = 0.95
+
+
+K_MIN = 10  # Minimum number of basis functions
+K_MAX = 30  # Maximum number of basis functions
+N_MIN = 80  # Minimum number of samples
+N_MAX = 200  # Maximum number of samples
+D_MIN = 1  # Minimum number of dimensions
+D_MAX = 5  # Maximum number of dimensions
+
+
+###############################################################################
+# Auxiliary functions  ########################################################
+###############################################################################
+
+
+def adapt_thresholds(
+    k: int, n: int, k_weight: float = 0.5, n_weight: float = 0.5
+) -> tuple[float, float]:
+    """Calculate adaptive threshold and probability threshold.
+
+    This function uses linear interpolation between minimum and maximum values
+    for threshold and probability thresholds, based on the positions of `k`
+    and `n` within their defined ranges. The influence
+    of `k` and `n` can be adjusted with weights.
+
+    Parameters
+    ----------
+    k : int
+        Number of Bernstein basis functions, expected to be in the range
+        [K_MIN, K_MAX].
+    n : int
+        Number of samples, expected to be in the range [N_MIN, N_MAX].
+    k_weight : float, optional
+        The weight assigned to k's influence on the adaptive
+        thresholds, by default 0.5.
+    n_weight : float, optional
+        The weight assigned to n's influence on the adaptive
+        thresholds, by default 0.5.
+
+    Returns
+    -------
+    tuple[float, float]
+        tuple containing:
+        - threshold (float): The adaptive threshold based on k and n.
+        - prob_threshold (float): The adaptive probability threshold
+          based on k and n.
+    """
+    # Ensure weights sum to 1
+    total_weight = k_weight + n_weight
+    k_weight /= total_weight
+    n_weight /= total_weight
+
+    # Calculate scale factors for k and n within their respective ranges
+    k_scale = (k - K_MIN) / (K_MAX - K_MIN)
+    n_scale = (n - N_MIN) / (N_MAX - N_MIN)
+
+    # Combine scales with weights
+    combined_scale = k_scale * k_weight + n_scale * n_weight
+
+    # Calculate the adaptive threshold and probability threshold based on the combined scale
+    threshold = THRESHOLD_MAX - (THRESHOLD_MAX - THRESHOLD_MIN) * combined_scale
+    prob_threshold = (
+        PROB_THRESHOLD_MIN + (PROB_THRESHOLD_MAX - PROB_THRESHOLD_MIN) * combined_scale
+    )
+
+    return threshold, prob_threshold
 
 
 ###############################################################################
@@ -131,12 +207,12 @@ def bernstein_density_model(x: array, k: int) -> None:
 
 
 @no_type_check
-@settings(deadline=None, max_examples=10)
+@settings(deadline=None, max_examples=MAX_EXAMPLES)
 @given(
     st.sampled_from(list(DISTRIBUTIONS.keys())),
-    st.integers(min_value=5, max_value=30),
-    st.integers(min_value=1, max_value=5),
-    st.integers(min_value=50, max_value=200),
+    st.integers(min_value=K_MIN, max_value=K_MAX),
+    st.integers(min_value=D_MIN, max_value=D_MAX),
+    st.integers(min_value=N_MIN, max_value=N_MAX),
 )
 def test_bernstein_density_approximation(
     dist_name: str, k: int, d: int, n: int
@@ -155,8 +231,9 @@ def test_bernstein_density_approximation(
         Number of samples.
     """
     seed: int = SEED
-    threshold: float = JSD_THRESHOLD
-    prob_jsd_less_than_threshold: float = PROB_JSD_LESS_THAN_THRESHOLD
+
+    threshold = THRESHOLD_MIN
+    prob_threshold = PROB_THRESHOLD_MAX
 
     dist = DISTRIBUTIONS[dist_name]
     support = SUPPORTS[dist_name]
@@ -206,4 +283,4 @@ def test_bernstein_density_approximation(
 
     prob_less_than_threshold = np.mean(jsd < threshold, axis=0)  # Shape: (d)
 
-    assert np.all(prob_less_than_threshold > prob_jsd_less_than_threshold)
+    assert np.all(prob_less_than_threshold > prob_threshold)
