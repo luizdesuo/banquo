@@ -23,8 +23,9 @@ jobs:
       - name: Install package
         run: poetry install
 
-      - name: Safety checks
-        run: poetry run nox -s safety
+      # ! safety is no longer working
+      # - name: Safety checks
+      #   run: poetry run nox -s safety
 
       - name: Run tests standard array api
         run: poetry run nox -s tests
