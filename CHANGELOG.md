@@ -1,7 +1,66 @@
 # CHANGELOG
 
 
+## v0.4.0 (2024-11-17)
+
+### Bug Fixes
+
+* fix: jax arrays setting API with .at[idx].set(value) ([`66a1edf`](https://github.com/luizdesuo/banquo/commit/66a1edff61d6b69fe325faf32e516d846c4c45f9))
+
+### Build System
+
+* build: safety check was deprecated, updated to scan ([`638f8da`](https://github.com/luizdesuo/banquo/commit/638f8da4477bbdf838d47913f5ab9cc49c7702f3))
+
+* build(deps): bump python-semantic-release/python-semantic-release
+
+Bumps [python-semantic-release/python-semantic-release](https://github.com/python-semantic-release/python-semantic-release) from 9.11.0 to 9.12.0.
+- [Release notes](https://github.com/python-semantic-release/python-semantic-release/releases)
+- [Changelog](https://github.com/python-semantic-release/python-semantic-release/blob/master/CHANGELOG.md)
+- [Commits](https://github.com/python-semantic-release/python-semantic-release/compare/v9.11.0...v9.12.0)
+
+---
+updated-dependencies:
+- dependency-name: python-semantic-release/python-semantic-release
+  dependency-type: direct:production
+  update-type: version-update:semver-minor
+...
+
+Signed-off-by: dependabot[bot] <support@github.com> ([`ba68db4`](https://github.com/luizdesuo/banquo/commit/ba68db4e26ae3833a2aea8c296b2e513dee417b2))
+
+### Continuous Integration
+
+* ci: removed safety from ci workflow due to their API breaking change ([`7296d08`](https://github.com/luizdesuo/banquo/commit/7296d08b90125b4970d1b2bd921ae7c7ec1262ab))
+
+### Documentation
+
+* docs: fix references for functions in docstrings ([`65034ed`](https://github.com/luizdesuo/banquo/commit/65034ed83cad50f098e10fbcb39aed7dfc49e659))
+
+### Features
+
+* feat: add kernels module with stochastic heat equation kernel ([`2fae7eb`](https://github.com/luizdesuo/banquo/commit/2fae7ebc26184d4420bd087a4d9befcf46a50839))
+
+* feat: remove bernstein_density and add Bernstein numpyro model ([`a647b2d`](https://github.com/luizdesuo/banquo/commit/a647b2d78ef9b031743e7eb81f6b81ff6eb6e279))
+
+### Testing
+
+* test: add auxiliary functions ([`f2b5431`](https://github.com/luizdesuo/banquo/commit/f2b54319b7979d260ec12f93ad13e267ddb5dc3d))
+
+* test: add test suite for kernels module ([`2b4998a`](https://github.com/luizdesuo/banquo/commit/2b4998a9dcf40fdf247f58e7ab6562e3060f9c91))
+
+* test: replace bernstein_density with Bernstein model ([`13d2453`](https://github.com/luizdesuo/banquo/commit/13d24538a366a46d783600b75702de29aa9a3852))
+
+### Unknown
+
+* Merge pull request #5 from luizdesuo/dependabot/github_actions/python-semantic-release/python-semantic-release-9.12.0
+
+build(deps): bump python-semantic-release/python-semantic-release from 9.11.0 to 9.12.0 ([`3eeece1`](https://github.com/luizdesuo/banquo/commit/3eeece18a67172898c527472523d0907dd05e7cc))
+
+
 ## v0.3.0 (2024-10-27)
+
+### Bug Fixes
+
+* fix: error when expanding weights dimension ([`11275a2`](https://github.com/luizdesuo/banquo/commit/11275a259959495bce8aa2c63557cd00cd6b2088))
 
 ### Build System
 
@@ -48,10 +107,6 @@ Signed-off-by: dependabot[bot] <support@github.com> ([`3c6d3fb`](https://github.
 * feat: add bernstein-based marginal modeling functions ([`fad6648`](https://github.com/luizdesuo/banquo/commit/fad6648c0e64faed957df19938d3620f0e9490c5))
 
 * feat: add logsumexp using array-api standard ([`9412c14`](https://github.com/luizdesuo/banquo/commit/9412c142cc71ed2d00fc80f1f7915adc1b19427d))
-
-### Fixes
-
-* fix: error when expanding weights dimension ([`11275a2`](https://github.com/luizdesuo/banquo/commit/11275a259959495bce8aa2c63557cd00cd6b2088))
 
 ### Testing
 
