@@ -9,9 +9,16 @@
 from dataclasses import dataclass, field
 
 from array_api_compat import array_namespace
-from numpyro.distributions import Beta, Distribution, constraints
+from numpyro.distributions import Beta, Distribution, GaussianCopula, constraints
 
-from banquo import array, bernstein_cdf, bernstein_lpdf, shape_handle_wT, shape_handle_x
+from banquo import (
+    array,
+    bernstein_cdf,
+    bernstein_icdf,
+    bernstein_lpdf,
+    shape_handle_wT,
+    shape_handle_x,
+)
 
 
 ###############################################################################
@@ -159,7 +166,7 @@ class Bernstein(Distribution):  # type: ignore
         Parameters
         ----------
         value : array
-            The observed data or values to evaluate the lpdf. The array should
+            The observed data or values to evaluate the cdf. The array should
             have shape `(n, d)`, where `n` is the number of samples,
             and `d` is the number of dimensions. If `value` is one-dimensional
             with shape `(n,)`, it will be reshaped to `(n, 1)`. Each element
@@ -179,4 +186,113 @@ class Bernstein(Distribution):  # type: ignore
         """
         return bernstein_cdf(
             NumpyroBeta, shape_handle_x(value), shape_handle_wT(self.weights)
+        )
+
+    def icdf(self, value: array) -> array:
+        """Compute the icdf of `value` using the Bernstein polynomial model.
+
+        Parameters
+        ----------
+        value : array
+            The observed data or values to evaluate the icdf. The array should
+            have shape `(n, d)`, where `n` is the number of samples,
+            and `d` is the number of dimensions. If `value` is one-dimensional
+            with shape `(n,)`, it will be reshaped to `(n, 1)`. Each element
+            represents a value in the interval [0, 1] to return
+            quantile under the Bernstein polynomial model.
+
+        Returns
+        -------
+        array
+            The quantile function of `value` under the Bernstein model.
+
+        Notes
+        -----
+        The :func:`banquo.bernstein_icdf` function is used to calculate the icdf,
+        based on Beta distribution for Bernstein basis functions.
+        """
+        return bernstein_icdf(
+            NumpyroBeta, shape_handle_x(value), shape_handle_wT(self.weights)
+        )
+
+
+class NonparanormalBernstein(GaussianCopula):  # type: ignore
+    r"""Nonparanormal model with Bernstein polynomial-based marginals.
+
+    The `NonparanormalBernstein` class implements a probability distribution
+    for nonparametric marginal densities modeling with Bernstein polynomials.
+    It uses a set of `weights` as coefficients for the basis functions
+    and supports computing the log-probability density and cumulative
+    distribution function (CDF). A Gaussian copula is used to create the
+    joint distribution. The nonparanormal model is formed up of both
+    the nonparametric marginals and the Gaussian copula, and its probability
+    density function is as follows:
+
+    .. math::
+        p(\mathbf{x}) = \lvert\mathbf{\Sigma}\rvert^{-1/2} \, \exp \left( -\frac{1}{2} \mathbf{\Psi}(\mathbf{x})^\mathrm{T} \, \left(\mathbf{\Sigma}^{-1} - \mathbf{I}\right) \, \mathbf{\Psi}(\mathbf{x})\right) \prod_{i=1}^d \lvert p(x_i)\rvert,
+
+    with :math:`\mathbf{\Psi}(\mathbf{x}) = (\Psi_1(x_1), \ldots, \Psi_d(x_d))^\mathrm{T}`,
+    where :math:`\Psi_i = \Phi^{-1} \circ F_i`. In this case, :math:`F_i` are
+    Bernstein cdf estimators given by:
+
+    .. math::
+        F_i(x) \approx \mathbf{w_i}^\mathrm{T} \mathbf{B}(x),
+
+    and the marginal density estimators are given by:
+
+    .. math::
+        p_i(x) = \approx \mathbf{w_i}^\mathrm{T} \mathbf{\beta}(x).
+
+    Both functions are implemented by :class:`Bernstein` model.
+
+    Parameters
+    ----------
+    weights : array
+        Array of weights (simplex) with shape `(d, k)`, where `d` is the number
+        of dimensions, and `k` is the number of basis functions (Bernstein
+        polynomial order). If the shape is `k`, the system will be considered
+        as a one-dimensional array. The weights are, for each dimension `d`,
+        a `k`-dimensional unit simplex. The weights are applied as coefficients
+        for the Bernstein polynomial basis in each dimension.
+    correlation_matrix : array | None, optional
+            Correlation matrix of coupling multivariate normal
+            distribution, by default None.
+    correlation_cholesky : array | None, optional
+        Correlation Cholesky factor of coupling multivariate normal
+        distribution, by default None.
+    validate_args : bool | None, optional
+        If True, validates the input parameters. By default, None (no
+        validation is applied).
+
+    Raises
+    ------
+    ValueError
+        If `weights` is not at least one-dimensional.
+    """  # noqa: B950
+
+    arg_constraints = {
+        "weights": constraints.simplex,
+        "correlation_matrix": constraints.corr_matrix,
+        "correlation_cholesky": constraints.corr_cholesky,
+    }
+    support = constraints.independent(constraints.unit_interval, 1)
+    pytree_data_fields = "weights"
+
+    def __init__(
+        self,
+        weights: array,
+        correlation_matrix: array | None = None,
+        correlation_cholesky: array | None = None,
+        *,
+        validate_args: bool | None = None,
+    ):
+        """Init NonparanormalBernstein model."""
+        # set initially to allow argument validation
+        self.weights = weights
+
+        super().__init__(
+            Bernstein(weights),
+            correlation_matrix,
+            correlation_cholesky,
+            validate_args=validate_args,
         )
