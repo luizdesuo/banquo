@@ -1122,7 +1122,7 @@ def bernstein_cdf(
     is given by:
 
     .. math::
-        p(x) \approx \mathbf{w}^\mathrm{T} \mathbf{B}(x),
+        F(x) \approx \mathbf{w}^\mathrm{T} \mathbf{B}(x),
 
     with :math:`\mathbf{B}(x) = (B_{1,k}(x), \ldots, B_{k,k}(x))^\mathrm{T}`
     and weights :math:`\mathbf{w}` are elements in a k-dimensional simplex.
@@ -1224,3 +1224,10 @@ def bernstein_cdf(
         return sum_weighted_cdf
     else:
         return xp.squeeze(sum_weighted_cdf)
+
+
+def bernstein_icdf(
+    beta: type[BetaProtocol], x: array, w: array, keepdims: bool = False
+) -> array:
+    r"""Compute the icdf for a Bernstein-Dirichlet polynomial model."""
+    raise NotImplementedError
