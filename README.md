@@ -25,11 +25,22 @@ a Python package for building Bayesian Nonparanormal models
 
 ## Features
 
-- TODO
+- [Array-API standard]
+- Bayesian inference
+- Semiparametric Bernstein estimator for cumulative distribution function and
+  probability density function
+- Nonparanormal model with Bernstein marginals
+- Hilbert space approximation for discrete stochastic heat equation kernel
+
+See the Banquo architecture below:
+
+![Architecture](https://raw.githubusercontent.com/luizdesuo/banquo/main/docs/_static/architecture.png)
 
 ## Requirements
 
-- TODO
+- [array-api-compat]
+- [NumPyro]
+- [ArviZ]
 
 ## Installation
 
@@ -41,7 +52,7 @@ pip install banquo
 
 ## Usage
 
-Please see the [Command-line Reference] for details.
+Please see the documentation at [Read the Docs] for details.
 
 ## Contributing
 
@@ -60,10 +71,14 @@ If you encounter any problems, please [file an issue] along with a detailed desc
 
 This project was generated from [Dinkin Flicka Cookiecutter] template.
 
-[pypi]: https://pypi.org/
+[pypi]: https://pypi.org/project/banquo/
 [dinkin flicka cookiecutter]: https://github.com/luizdesuo/cookiecutter-dinkin-flicka
 [file an issue]: https://github.com/luizdesuo/banquo/issues
 [pip]: https://pip.pypa.io/
+[array-api standard]: https://data-apis.org/array-api/latest/
+[array-api-compat]: https://github.com/data-apis/array-api-compat
+[numpyro]: https://github.com/pyro-ppl/numpyro
+[arviz]: https://github.com/arviz-devs/arviz
 
 <!-- github-only -->
 
