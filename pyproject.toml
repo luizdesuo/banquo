@@ -7,6 +7,11 @@ license = "MIT"
 readme = "README.md"
 homepage = "https://github.com/luizdesuo/banquo"
 repository = "https://github.com/luizdesuo/banquo"
+
+classifiers = [
+    "Development Status :: 3 - Alpha",
+]
+
 [tool.poetry.urls]
 Changelog = "https://github.com/luizdesuo/banquo/releases"
 
