@@ -19,7 +19,6 @@ Changelog = "https://github.com/luizdesuo/banquo/releases"
 python = "^3.11"
 click = ">=8.1.7"
 numpyro = {extras = ["cpu", "gpu"], version = ">=0.13.2"}
-arviz = ">=0.17.0"
 array-api-compat = ">=1.9"
 
 [tool.poetry.group.dev.dependencies]
@@ -34,6 +33,7 @@ typeguard = ">=4.1.5"
 xdoctest = {extras = ["colors"], version = ">=1.1.2"}
 pygments = ">=2.16.1"
 hypothesis = ">=6.115.0"
+arviz = ">=0.17.0"
 
 [tool.poetry.group.docs.dependencies]
 jupyter = ">=1.0.0"

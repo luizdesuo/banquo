@@ -40,7 +40,6 @@ See the Banquo architecture below:
 
 - [array-api-compat]
 - [NumPyro]
-- [ArviZ]
 
 ## Installation
 
