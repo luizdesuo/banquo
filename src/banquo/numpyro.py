@@ -8,8 +8,10 @@
 
 from dataclasses import dataclass, field
 
+import jax.random as random
 from array_api_compat import array_namespace
 from numpyro.distributions import Beta, Distribution, GaussianCopula, constraints
+from numpyro.util import is_prng_key
 
 from banquo import (
     array,
@@ -139,6 +141,40 @@ class Bernstein(Distribution):  # type: ignore
             batch_shape=batch_shape,
             validate_args=validate_args,
         )
+
+    def sample(self, key: random.PRNGKey, sample_shape: tuple[int, ...] = ()) -> array:
+        """Sample from Bernstein distribution.
+
+        Returns a sample from the distribution with the shape specified
+        by `sample_shape + batch_shape + event_shape`. Exchangeable draws from
+        the distribution instance will fill the leading dimensions
+        (of size `sample_shape`) of the returned sample when `sample_shape`
+        is not empty.
+
+        Parameters
+        ----------
+        key : random.PRNGKey
+            The rng_key to be used for generating random numbers.
+        sample_shape : tuple[int, ...], optional
+            The desired shape of independent samples to draw, by default ().
+            If it is set to an empty tuple, it corresponds to a single sample.
+
+        Returns
+        -------
+        array
+            Samples drawn from the distribution with shape
+            `sample_shape + self.batch_shape + self.event_shape`.
+
+        Raises
+        ------
+        ValueError
+            If the provided key is not a valid PRNG key.
+        """
+        if not is_prng_key(key):
+            raise ValueError("The provided key must be a valid PRNG key.")
+        random_shape = sample_shape + self.batch_shape + self.event_shape
+        unifs = random.uniform(key, shape=random_shape)
+        return self.icdf(unifs)
 
     def log_prob(self, value: array) -> array:
         """Compute the lpdf of `value` using the Bernstein polynomial model.
