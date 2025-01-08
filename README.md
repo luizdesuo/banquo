@@ -30,7 +30,7 @@ a Python package for building Bayesian Nonparanormal models
 - Semiparametric Bernstein estimator for cumulative distribution function and
   probability density function
 - Nonparanormal model with Bernstein marginals
-- Hilbert space approximation for discrete stochastic heat equation kernel
+- Discrete stochastic heat equation correlation function
 
 See the Banquo architecture below:
 
