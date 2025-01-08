@@ -24,6 +24,7 @@ extensions = [
     "sphinx_click",
     "myst_parser",
     "sphinx_copybutton",
+    "sphinx.ext.viewcode",
 ]
 
 autoapi_dirs = ["../src"]
