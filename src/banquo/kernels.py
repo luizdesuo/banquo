@@ -19,8 +19,7 @@ from banquo import array
 __all__ = [
     "squared_fractional_graph_laplacian",
     "flat_index",
-    "psd_diag_discrete_stochastic_heat_equation",
-    "hs_discrete_stochastic_heat_equation_kernel",
+    "discrete_stochastic_heat_equation_corr",
 ]
 
 
@@ -59,21 +58,11 @@ def squared_fractional_graph_laplacian(
         Transformed eigenvalues using the squared fractional Laplacian
         formula.
 
-    Raises
-    ------
-    ValueError
-        If `kappa` or `alpha` is less than or equal to zero.
-
     Notes
     -----
     - `Non-separable Spatio-temporal Graph Kernels via SPDEs
       <https://proceedings.mlr.press/v151/nikitin22a>`__.
     """
-    if kappa <= 0:
-        raise ValueError("Parameter `kappa` must be positive.")
-    if alpha <= 0:
-        raise ValueError("Parameter `alpha` must be positive.")
-
     return (kappa**2 + eigenvalues) ** (alpha)
 
 
@@ -111,95 +100,19 @@ def flat_index(
 ###############################################################################
 
 
-def psd_diag_discrete_stochastic_heat_equation(
-    eta: tuple[array, array], tau: float, gamma: float, kappa: float, alpha: float
-) -> array:
-    r"""Compute the PSD for the discrete stochastic heat equation.
-
-    This function calculates the power spectral density (PSD) based on the
-    eigenvalues associated with spatial and temporal frequencies of the system.
-    The following is the expression for the stochastic heat equation PSD:
-
-    .. math::
-        S_\mathcal{X}(\omega_t, \lambda_s) = \left[(2\pi)^{d+1} \tau^2 \left(\lvert\omega_t\rvert^2 + \lambda_s^2\right)\right]^{-1},
-
-    where :math:`\lambda_s` are eigenvalues of the graph Laplacian.
-
-    This function uses the :func:`squared_fractional_graph_laplacian`
-    for computing the fractional graph Laplacian through the
-    graph Laplacian eigenvalues.
-
-    Parameters
-    ----------
-    eta : tuple[array, array]
-        Tuple containing the eigenvalues for time (`eta[1]`)
-        and graph Laplacian (`eta[0]`).
-    tau : float
-        Precision parameter, must be positive.
-    gamma : float
-        Medium's (thermal) diffusivity, must be positive.
-    kappa : float
-        Shifting factor applied to the spatial eigenvalues of the graph
-        Laplacian, must be positive.
-    alpha : float
-        Exponent controlling the fractional power of the transformed Laplacian,
-        must be positive. It has a linear relation with the smoothness.
-
-    Returns
-    -------
-    array
-        Array of PSD values for each combination of spatial and temporal
-        frequency, representing the power contribution of each mode in
-        the heat equation. It must be combined with the respective
-        eigenvectors so it becomes a kernel.
-
-    Raises
-    ------
-    ValueError
-        If any of `tau`, `gamma`, `kappa` or `alpha` is less
-        than or equal to zero.
-    """  # noqa: B950
-    if tau <= 0:
-        raise ValueError("Parameter `tau` must be positive.")
-    if gamma <= 0:
-        raise ValueError("Parameter `gamma` must be positive.")
-    if kappa <= 0:
-        raise ValueError("Parameter `kappa` must be positive.")
-    if alpha <= 0:
-        raise ValueError("Parameter `alpha` must be positive.")
-
-    # omega = (omega_time, omega_space)
-    xp = array_namespace(*eta)  # Get the array API namespace
-
-    omega_space_abs = xp.abs(eta[0])
-    omega_time_abs = xp.abs(eta[1])
-
-    # d + 1
-    dim = omega_space_abs.shape[0] + 1
-
-    Gamma_squared = gamma**2 * squared_fractional_graph_laplacian(  # noqa: N806
-        eigenvalues=omega_space_abs, kappa=kappa, alpha=alpha
-    )
-
-    return 1 / ((2 * xp.pi) ** dim * tau**2 * (omega_time_abs**2 + Gamma_squared))
-
-
-# TODO: check ill-conditioning of the kernel
-# TODO: when tau, gamma, kappa and alpha tends to 0
-def hs_discrete_stochastic_heat_equation_kernel(
-    hs_eigenpair: tuple[array, array],
+def discrete_stochastic_heat_equation_corr(
+    t: array,
     graph_eigenpair: tuple[array, array],
-    tau: float,
     gamma: float,
     kappa: float,
     alpha: float,
-    epsilon: float = 1e-8,
 ) -> array:
-    r"""Approximate the discrete stochastic heat equation kernel.
+    r"""Approximate the discrete stochastic heat equation normalized kernel.
 
-    This function builds an approximation for the Gram matrix of the kernel
-    resulted from the discrete stochastic heat equation on a graph.
-    The following is the expression for the stochastic heat equation:
+    This function builds an approximation for the Gram matrix of the normalized
+    kernel (correlation) resulted from the discrete stochastic heat equation
+    on a graph. The following is the expression for the stochastic
+    heat equation:
 
     .. math::
         \left[\frac{\partial}{\partial t} + \gamma \left(\kappa^2 + \Delta\right)^{\alpha/2}\right] \tau \mathbf{X}(\xi) = \mathbf{W}(\xi).
@@ -215,29 +128,20 @@ def hs_discrete_stochastic_heat_equation_kernel(
     Laplacian operator :math:`L` is used in place of the continuous one
     :math:`\Delta`.
 
-    This function leverages the Hilbert space approximation:
+    This correlation function is given by:
 
     .. math::
-       k(\xi, \xi ') \approx \sum_{j \in \mathcal{I}} S_\mathcal{X}(\sqrt{\lambda}_j) \phi_j(\xi) \phi_j(\xi ').
-
-    It computes the Gram matrix by combining Hilbert space approximation
-    eigenvalues and eigenfunctions for time with graph Laplacian eigenvalues and
-    eigenvectors for space. The Gram matrix shape reflects node-time structure.
-    For regularization and numerical stability, a Marquardt-Levenberg coefficient
-    is added to the diagonal.
+       k\left(\lvert t-t'\rvert\right) = \exp\left(-\mathbf{\Gamma} \lvert t-t'\rvert\right).
 
     :func:`flat_index` can be used to provide human-friendly access
     to the matrix elements.
 
     Parameters
     ----------
-    hs_eigenpair : tuple[array, array]
-        Eigenvalues (sqrt) and eigenfunctions of the Hilbert space
-        approximation.
+    t : array
+        Time indices.
     graph_eigenpair : tuple[array, array]
         Eigenvalues and eigenvectors of the graph Laplacian.
-    tau : float
-        Precision parameter, must be positive.
     gamma : float
         Medium's (thermal) diffusivity, must be positive.
     kappa : float
@@ -246,70 +150,37 @@ def hs_discrete_stochastic_heat_equation_kernel(
     alpha : float
         Exponent controlling the fractional power of the transformed Laplacian,
         must be positive. It has a linear relation with the smoothness.
-    epsilon : float, optional
-        Marquardt-Levenberg coefficient, by default 1e-8
 
     Returns
     -------
     array
-        Non-separable spatiotemporal covariance matrix.
+        Non-separable spatiotemporal correlation matrix.
         The spatial domain is discretized as a graph.
-
-    Raises
-    ------
-    ValueError
-        If any of `tau`, `gamma`, `kappa` or `alpha` is less
-        than or equal to zero.
 
     Notes
     -----
     - `Non-separable Spatio-temporal Graph Kernels via SPDEs
       <https://proceedings.mlr.press/v151/nikitin22a>`__.
-    - `Practical Hilbert space approximate Bayesian
-      Gaussian processes for probabilistic programming
-      <https://link.springer.com/article/10.1007/s11222-022-10167-2>`__.
-    - `Hilbert space methods for reduced-rank Gaussian process regression
-      <https://link.springer.com/article/10.1007/s11222-019-09886-w>`__.
     """  # noqa: B950
-    if tau <= 0:
-        raise ValueError("Parameter `tau` must be positive.")
-    if gamma <= 0:
-        raise ValueError("Parameter `gamma` must be positive.")
-    if kappa <= 0:
-        raise ValueError("Parameter `kappa` must be positive.")
-    if alpha <= 0:
-        raise ValueError("Parameter `alpha` must be positive.")
-
-    sqrt_lambdas, phi = hs_eigenpair
     S, Q = graph_eigenpair  # noqa: N806
 
-    xp = array_namespace(phi, sqrt_lambdas, Q, S)  # Get the array API namespace
+    D = S.shape[0]  # noqa: N806
+    T = t.shape[0]  # noqa: N806
 
-    # Sum of all combinations of HS eigenvalues with graph Laplacian matrix eigenvalues
-    lambdas = psd_diag_discrete_stochastic_heat_equation(
-        eta=(S[:, None], sqrt_lambdas), tau=tau, gamma=gamma, kappa=kappa, alpha=alpha
+    xp = array_namespace(Q, S, t)  # Get the array API namespace
+
+    r = xp.abs(t[:, None] - t[None, :])  # Time delta matrix
+
+    # Drift operator eigenvalues
+    Gamma = gamma * xp.sqrt(  # noqa: N806
+        squared_fractional_graph_laplacian(S, kappa, alpha)
     )
 
-    d, m = lambdas.shape
-    t, _ = phi.shape
-
-    eye_d = xp.eye(d)
-    eye_m = xp.eye(m)
+    eye_d = xp.eye(D)
 
     # Tensor diag
-    lambdas_diag = lambdas.T[:, :, None] * eye_d
+    lambda_diag = xp.exp(-r * Gamma[:, None, None]).T[..., None] * eye_d
 
-    # Recomposing graph domain
-    psd = Q[None, :, :] @ lambdas_diag @ Q.T[None, :, :]
+    kernel = Q[None, None, ...] @ lambda_diag @ Q.T[None, None, ...]
 
-    # Tensor diag
-    psd_diag = psd.T[:, :, :, None] * eye_m
-
-    # Recomposing time domain
-    kernel = phi[None, None, :, :] @ psd_diag @ phi.T[None, None, :, :]
-
-    reg_coeff = epsilon * xp.eye(d * t)
-
-    # Reshape to covariance matrix and add Marquardt-Levenberg
-    # coefficient for ill-conditioned matrices
-    return xp.transpose(kernel, (0, 2, 1, 3)).reshape(d * t, d * t) + reg_coeff
+    return xp.transpose(kernel, (2, 0, 3, 1)).reshape(D * T, D * T)
