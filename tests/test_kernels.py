@@ -12,6 +12,7 @@ import jax.numpy as jnp
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
+from banquo import array
 from banquo.kernels import discrete_stochastic_heat_equation_corr
 
 # TODO: implement to other APIs (for now jax).
