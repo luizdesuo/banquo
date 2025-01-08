@@ -11,10 +11,8 @@ from typing import no_type_check
 import jax.numpy as jnp
 from hypothesis import given, settings
 from hypothesis import strategies as st
-from numpyro.contrib.hsgp.laplacian import eigenfunctions, sqrt_eigenvalues
 
-from banquo import array, normalize_covariance
-from banquo.kernels import hs_discrete_stochastic_heat_equation_kernel
+from banquo.kernels import discrete_stochastic_heat_equation_corr
 
 # TODO: implement to other APIs (for now jax).
 from .hypothesis_arrays_strategy import spd_square_matrix_builder_float64
@@ -52,9 +50,7 @@ spd_matrix_builder_float64 = spd_square_matrix_builder_float64(size=SPD_SIZE)
 @settings(deadline=None, max_examples=MAX_EXAMPLES)
 @given(
     graph_laplacian=spd_matrix_builder_float64,
-    m=st.integers(min_value=M_MIN, max_value=M_MAX),
     t=st.integers(min_value=T_MIN, max_value=T_MAX),
-    tau=st.floats(min_value=0.1, max_value=5, allow_nan=False, width=WIDTH),
     gamma=st.floats(min_value=0.1, max_value=5, allow_nan=False, width=WIDTH),
     kappa=st.floats(min_value=0.1, max_value=5, allow_nan=False, width=WIDTH),
     alpha=st.floats(
@@ -64,30 +60,22 @@ spd_matrix_builder_float64 = spd_square_matrix_builder_float64(size=SPD_SIZE)
         allow_nan=False,
         width=WIDTH,
     ),
-    epsilon=st.floats(min_value=1.0e-8, max_value=1.0e-6, allow_nan=False, width=WIDTH),
 )
-def test_hs_discrete_stochastic_heat_equation_kernel_shape(
+def test_discrete_stochastic_heat_equation_corr_shape(
     graph_laplacian: array,
-    m: int,
     t: int,
-    tau: float,
     gamma: float,
     kappa: float,
     alpha: float,
-    epsilon: float,
 ) -> None:
-    """Test of hs_discrete_stochastic_heat_equation_kernel resulting shape.
+    """Test of discrete_stochastic_heat_equation_corr resulting shape.
 
     Parameters
     ----------
     graph_laplacian : array
         SPD matrix.
-    m : int
-        Number of Hilbert space basis functions
     t : int
         Number of time stamps or number of samples.
-    tau : float
-        Precision parameter, must be positive.
     gamma : float
         Medium's (thermal) diffusivity, must be positive.
     kappa : float
@@ -96,8 +84,6 @@ def test_hs_discrete_stochastic_heat_equation_kernel_shape(
     alpha : float
         Exponent controlling the fractional power of the transformed Laplacian,
         must be positive. It has a linear relation with the smoothness.
-    epsilon : float, optional
-        Marquardt-Levenberg coefficient.
     """
     graph_laplacian = jnp.asarray(graph_laplacian)
 
@@ -107,17 +93,12 @@ def test_hs_discrete_stochastic_heat_equation_kernel_shape(
 
     x = jnp.linspace(-1, 1, t)
 
-    phi = eigenfunctions(x=x, ell=ELL, m=m)
-    sqrt_lambdas = sqrt_eigenvalues(ell=ELL, m=m, dim=1)  # One time dimension
-
-    k = hs_discrete_stochastic_heat_equation_kernel(
-        (sqrt_lambdas, phi),
+    k = discrete_stochastic_heat_equation_corr(
+        x,
         (S, Q),
-        tau=tau,
         gamma=gamma,
         kappa=kappa,
         alpha=alpha,
-        epsilon=epsilon,
     )
 
     assert k.shape == (d * t, d * t)
@@ -127,9 +108,7 @@ def test_hs_discrete_stochastic_heat_equation_kernel_shape(
 @settings(deadline=None, max_examples=MAX_EXAMPLES)
 @given(
     graph_laplacian=spd_matrix_builder_float64,
-    m=st.integers(min_value=M_MIN, max_value=M_MAX),
     t=st.integers(min_value=T_MIN, max_value=T_MAX),
-    tau=st.floats(min_value=0.1, max_value=5, allow_nan=False, width=WIDTH),
     gamma=st.floats(min_value=0.1, max_value=5, allow_nan=False, width=WIDTH),
     kappa=st.floats(min_value=0.1, max_value=5, allow_nan=False, width=WIDTH),
     alpha=st.floats(
@@ -139,30 +118,22 @@ def test_hs_discrete_stochastic_heat_equation_kernel_shape(
         allow_nan=False,
         width=WIDTH,
     ),
-    epsilon=st.floats(min_value=1.0e-8, max_value=1.0e-6, allow_nan=False, width=WIDTH),
 )
-def test_hs_discrete_stochastic_heat_equation_kernel_is_spd(
+def test_discrete_stochastic_heat_equation_corr_is_spd(
     graph_laplacian: array,
-    m: int,
     t: int,
-    tau: float,
     gamma: float,
     kappa: float,
     alpha: float,
-    epsilon: float,
 ) -> None:
-    """Test if hs_discrete_stochastic_heat_equation_kernel results in SPD.
+    """Test if discrete_stochastic_heat_equation_corr results in SPD.
 
     Parameters
     ----------
     graph_laplacian : array
         SPD matrix.
-    m : int
-        Number of Hilbert space basis functions
     t : int
         Number of time stamps or number of samples.
-    tau : float
-        Precision parameter, must be positive.
     gamma : float
         Medium's (thermal) diffusivity, must be positive.
     kappa : float
@@ -171,8 +142,6 @@ def test_hs_discrete_stochastic_heat_equation_kernel_is_spd(
     alpha : float
         Exponent controlling the fractional power of the transformed Laplacian,
         must be positive. It has a linear relation with the smoothness.
-    epsilon : float, optional
-        Marquardt-Levenberg coefficient.
     """
     graph_laplacian = jnp.asarray(graph_laplacian)
 
@@ -182,17 +151,12 @@ def test_hs_discrete_stochastic_heat_equation_kernel_is_spd(
 
     x = jnp.linspace(-1, 1, t)
 
-    phi = eigenfunctions(x=x, ell=ELL, m=m)
-    sqrt_lambdas = sqrt_eigenvalues(ell=ELL, m=m, dim=1)  # One time dimension
-
-    k = hs_discrete_stochastic_heat_equation_kernel(
-        (sqrt_lambdas, phi),
+    k = discrete_stochastic_heat_equation_corr(
+        x,
         (S, Q),
-        tau=tau,
         gamma=gamma,
         kappa=kappa,
         alpha=alpha,
-        epsilon=epsilon,
     )
 
     eigenvals = jnp.linalg.eigvalsh(k)
@@ -204,9 +168,7 @@ def test_hs_discrete_stochastic_heat_equation_kernel_is_spd(
 @settings(deadline=None, max_examples=MAX_EXAMPLES)
 @given(
     graph_laplacian=spd_matrix_builder_float64,
-    m=st.integers(min_value=M_MIN, max_value=M_MAX),
     t=st.integers(min_value=T_MIN, max_value=T_MAX),
-    tau=st.floats(min_value=0.1, max_value=5, allow_nan=False, width=WIDTH),
     gamma=st.floats(min_value=0.1, max_value=5, allow_nan=False, width=WIDTH),
     kappa=st.floats(min_value=0.1, max_value=5, allow_nan=False, width=WIDTH),
     alpha=st.floats(
@@ -216,30 +178,22 @@ def test_hs_discrete_stochastic_heat_equation_kernel_is_spd(
         allow_nan=False,
         width=WIDTH,
     ),
-    epsilon=st.floats(min_value=1.0e-8, max_value=1.0e-6, allow_nan=False, width=WIDTH),
 )
-def test_hs_discrete_stochastic_heat_equation_kernel_normalization(
+def test_discrete_stochastic_heat_equation_corr_normalization(
     graph_laplacian: array,
-    m: int,
     t: int,
-    tau: float,
     gamma: float,
     kappa: float,
     alpha: float,
-    epsilon: float,
 ) -> None:
-    """Test normalization of hs_discrete_stochastic_heat_equation_kernel.
+    """Test normalization of discrete_stochastic_heat_equation_corr.
 
     Parameters
     ----------
     graph_laplacian : array
         SPD matrix.
-    m : int
-        Number of Hilbert space basis functions
     t : int
         Number of time stamps or number of samples.
-    tau : float
-        Precision parameter, must be positive.
     gamma : float
         Medium's (thermal) diffusivity, must be positive.
     kappa : float
@@ -248,8 +202,6 @@ def test_hs_discrete_stochastic_heat_equation_kernel_normalization(
     alpha : float
         Exponent controlling the fractional power of the transformed Laplacian,
         must be positive. It has a linear relation with the smoothness.
-    epsilon : float, optional
-        Marquardt-Levenberg coefficient.
     """
     graph_laplacian = jnp.asarray(graph_laplacian)
 
@@ -259,24 +211,17 @@ def test_hs_discrete_stochastic_heat_equation_kernel_normalization(
 
     x = jnp.linspace(-1, 1, t)
 
-    phi = eigenfunctions(x=x, ell=ELL, m=m)
-    sqrt_lambdas = sqrt_eigenvalues(ell=ELL, m=m, dim=1)  # One time dimension
-
-    k = hs_discrete_stochastic_heat_equation_kernel(
-        (sqrt_lambdas, phi),
+    k = discrete_stochastic_heat_equation_corr(
+        x,
         (S, Q),
-        tau=tau,
         gamma=gamma,
         kappa=kappa,
         alpha=alpha,
-        epsilon=epsilon,
     )
 
-    k_norm = normalize_covariance(k)
+    eigenvals = jnp.linalg.eigvalsh(k)
 
-    eigenvals = jnp.linalg.eigvalsh(k_norm)
-
-    k_norm_abs = jnp.abs(k_norm)
+    k_norm_abs = jnp.abs(k)
 
     assert jnp.all(eigenvals > 0)
 
