@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "banquo"
-version = "0.5.0"
+version = "0.6.0"
 description = "Banquo: a Python package for building Bayesian Nonparanormal models"
 authors = ["Luiz Desuó Neto <luizdesuo@gmail.com>"]
 license = "MIT"
