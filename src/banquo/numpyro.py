@@ -13,7 +13,7 @@ from array_api_compat import array_namespace
 from numpyro.distributions import Beta, Distribution, GaussianCopula, constraints
 from numpyro.util import is_prng_key
 
-from banquo import (
+from banquo.banquo import (
     array,
     bernstein_cdf,
     bernstein_icdf,
@@ -285,7 +285,7 @@ class NonparanormalBernstein(GaussianCopula):  # type: ignore
     and the marginal density estimators are given by:
 
     .. math::
-        p_i(x) = \approx \mathbf{w_i}^\mathrm{T} \mathbf{\beta}(x).
+        p_i(x) \approx \mathbf{w_i}^\mathrm{T} \mathbf{\beta}(x).
 
     Both functions are implemented by :class:`Bernstein` model.
 

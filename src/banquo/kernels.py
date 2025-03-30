@@ -8,7 +8,7 @@
 
 from array_api_compat import array_namespace
 
-from banquo import array
+from banquo.banquo import array
 
 
 ###############################################################################

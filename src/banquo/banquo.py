@@ -15,6 +15,44 @@ from array_api_compat import is_jax_array
 
 
 ###############################################################################
+# Namespace ###################################################################
+###############################################################################
+
+
+__all__ = [
+    "BanquoError",
+    "BetaProtocol",
+    "DataMaxExceedsSupportUpperBoundError",
+    "DataMinExceedsSupportLowerBoundError",
+    "DataRangeExceedsSupportBoundError",
+    "Device",
+    "MinMaxNormalizationError",
+    "add_intercept_column",
+    "array",
+    "bernstein_cdf",
+    "bernstein_icdf",
+    "bernstein_lpdf",
+    "bernstein_pdf",
+    "chol2inv",
+    "device",
+    "diag",
+    "divide_ns",
+    "extract_minmax_parameters",
+    "homographic_ns",
+    "kahan_sum",
+    "logsumexp",
+    "minmax_normalization",
+    "multi_normal_cholesky_copula_lpdf",
+    "multiply_ns",
+    "normalize_covariance",
+    "shape_handle_wT",
+    "shape_handle_wT_posterior",
+    "shape_handle_x",
+    "std_ns",
+]
+
+
+###############################################################################
 # Custom types for annotation #################################################
 ###############################################################################
 
