@@ -13,7 +13,7 @@ from typing import Any, no_type_check
 import numpy as nxp  # ! from numpy import array_api as nxp not working
 from hypothesis import strategies as st
 
-from banquo import diag
+from banquo.banquo import diag
 
 from .conftest import xps  # Parameterization in conftest.py for CLI
 

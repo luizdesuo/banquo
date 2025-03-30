@@ -23,7 +23,7 @@ from numpyro.infer import MCMC, NUTS
 from scipy import stats
 from scipy.spatial.distance import jensenshannon
 
-from banquo import (
+from banquo.banquo import (
     array,
     bernstein_cdf,
     bernstein_pdf,

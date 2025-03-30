@@ -16,7 +16,7 @@ from hypothesis import strategies as st
 from scipy.special import logsumexp as scipy_logsumexp
 from scipy.stats import multivariate_normal, norm
 
-from banquo import (
+from banquo.banquo import (
     DataMaxExceedsSupportUpperBoundError,
     DataMinExceedsSupportLowerBoundError,
     DataRangeExceedsSupportBoundError,
