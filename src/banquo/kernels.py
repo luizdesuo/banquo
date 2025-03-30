@@ -20,6 +20,7 @@ __all__ = [
     "squared_fractional_graph_laplacian",
     "flat_index",
     "discrete_stochastic_heat_equation_corr",
+    "discrete_whittle_matern_fields_corr",
 ]
 
 
@@ -184,3 +185,91 @@ def discrete_stochastic_heat_equation_corr(
     kernel = Q[None, None, ...] @ lambda_diag @ Q.T[None, None, ...]
 
     return xp.transpose(kernel, (2, 0, 3, 1)).reshape(D * T, D * T)
+
+
+def discrete_whittle_matern_fields_corr(
+    graph_eigenpair: tuple[array, array],
+    kappa: float,
+    alpha: float,
+) -> array:
+    r"""Compute the correlation matrix approximating a Whittle–Matérn field.
+
+    This function constructs an approximation to the kernel corresponding to
+    a Whittle–Matérn field defined as the solution to the SPDE
+
+    .. math::
+        \tau \, \left(\kappa^2 - \Delta_{\mathbf{s}}\right)^{\alpha/2} \mathbf{X}(\mathbf{s}) = \mathbf{W}(\mathbf{s}),
+
+    where :math:`\mathbf{W}(\mathbf{s})` is Gaussian white noise and
+    :math:`\Delta` is the Laplacian operator on a spatial domain
+    :math:`\Omega`. In the discrete setting, the continuous domain
+    :math:`\Omega` is replaced by a tessellated mesh :math:`\Omega_h`
+    with grid spacing :math:`h`, and the continuous Laplacian is approximated
+    by the graph Laplacian :math:`\mathbf{L}`. Assuming the spectral
+    decomposition
+
+    .. math::
+        \mathbf{L} = \mathbf{Q} \mathbf{\Lambda} \mathbf{Q}^{\mathrm{T}},
+
+    with eigenvalues :math:`\mathbf{\Lambda}` and eigenvectors
+    :math:`\mathbf{Q}`, the covariance matrix of the associated
+    Gaussian Markov random field (GMRF) is given by
+
+    .. math::
+        \mathbf{\Sigma} = \mathbf{Q} \tau^{-2}\left(\kappa^2 \mathbf{I} + \mathbf{\Lambda}\right)^{-\alpha}  \mathbf{Q}^{\mathrm{T}},
+
+    Removing the precision parameter :math:`\tau` via a diagonal scaling
+    produces the correlation matrix
+
+    .. math::
+        \mathbf{\Omega} = \mathbf{S}^{-1} \mathbf{Q} \left(\kappa^2 \mathbf{I} + \mathbf{\Lambda}\right)^{-\alpha}  \mathbf{Q}^{\mathrm{T}} \mathbf{S}^{-1} ,
+
+    where the diagonal entries of :math:`\mathbf{S}` are defined by
+
+    .. math::
+        \mathbf{S}_{ii} = \sqrt{\sum_{r=1}^d \mathbf{Q}_{ir}^2 \left( \kappa^2 + \lambda_r \right)^{-\alpha}}.
+
+    Parameters
+    ----------
+    graph_eigenpair : tuple[array, array]
+        A tuple (:math:`\mathbf{\Lambda}`, :math:`\mathbf{Q}`) where
+        :math:`\mathbf{\Lambda}` is an array of eigenvalues and
+        :math:`\mathbf{Q}` is the corresponding array of eigenvectors.
+    kappa : float
+        A positive shifting factor applied to the eigenvalues.
+        It adjusts the spatial scale of the field.
+    alpha : float
+        A positive exponent controlling the fractional power
+        of the Laplacian transformation. This parameter is directly
+        related to the smoothness of the field. It must be greater
+        than :math:`d/2`, where :math:`d` is the number of nodes.
+
+    Returns
+    -------
+    array
+        The normalized correlation matrix approximating
+        the Whittle–Matérn field on the discretized domain. This matrix
+        converges to the true continuous correlation structure as the
+        discretization is refined.
+
+    Notes
+    -----
+    - `Non-separable Spatio-temporal Graph Kernels via SPDEs
+      <https://proceedings.mlr.press/v151/nikitin22a>`__.
+    """  # noqa: B950
+    Lambda, Q = graph_eigenpair  # noqa: N806
+
+    xp = array_namespace(Lambda, Q)  # Get the array API namespace
+
+    squared_L_tilde = squared_fractional_graph_laplacian(  # noqa: N806
+        Lambda, kappa, alpha
+    )
+
+    # Compute normalizing factor
+    S = xp.sqrt(xp.sum(Q**2 * squared_L_tilde, axis=1))  # noqa: N806
+
+    Q_scaled = Q * xp.sqrt(squared_L_tilde)  # noqa: N806
+
+    Q_normalized = Q_scaled / S[:, None]  # noqa: N806
+
+    return Q_normalized @ Q_normalized.T
