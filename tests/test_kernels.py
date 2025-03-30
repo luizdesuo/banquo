@@ -13,7 +13,10 @@ from hypothesis import given, settings
 from hypothesis import strategies as st
 
 from banquo.banquo import array
-from banquo.kernels import discrete_stochastic_heat_equation_corr
+from banquo.kernels import (
+    discrete_stochastic_heat_equation_corr,
+    discrete_whittle_matern_fields_corr,
+)
 
 # TODO: implement to other APIs (for now jax).
 from .hypothesis_arrays_strategy import spd_square_matrix_builder_float64
@@ -227,3 +230,152 @@ def test_discrete_stochastic_heat_equation_corr_normalization(
     assert jnp.all(eigenvals > 0)
 
     assert jnp.all((k_norm_abs < 1.0) | jnp.isclose(k_norm_abs, 1.0))
+
+
+###############################################################################
+# Tests for discrete Whittle–Matérn field correlation  ########################
+###############################################################################
+
+
+@no_type_check
+@settings(deadline=None, max_examples=MAX_EXAMPLES)
+@given(
+    graph_laplacian=spd_matrix_builder_float64,
+    kappa=st.floats(min_value=0.1, max_value=5, allow_nan=False, width=WIDTH),
+    alpha=st.floats(
+        min_value=SPD_SIZE / 2,
+        max_value=10,
+        exclude_min=True,
+        allow_nan=False,
+        width=WIDTH,
+    ),
+)
+def test_discrete_whittle_matern_fields_corr_shape(
+    graph_laplacian: array,
+    kappa: float,
+    alpha: float,
+) -> None:
+    """Test of discrete_whittle_matern_fields_corr resulting shape.
+
+    Parameters
+    ----------
+    graph_laplacian : array
+        SPD matrix.
+    kappa : float
+        Shifting factor applied to the spatial eigenvalues of the graph
+        Laplacian, must be positive.
+    alpha : float
+        Exponent controlling the fractional power of the transformed Laplacian,
+        must be positive. It has a linear relation with the smoothness.
+    """
+    graph_laplacian = jnp.asarray(graph_laplacian)
+
+    d = graph_laplacian.shape[0]
+
+    S, Q = jnp.linalg.eigh(jnp.asarray(graph_laplacian))
+
+    k = discrete_whittle_matern_fields_corr(
+        (S, Q),
+        kappa=kappa,
+        alpha=alpha,
+    )
+
+    assert k.shape == (d, d)
+
+
+@no_type_check
+@settings(deadline=None, max_examples=MAX_EXAMPLES)
+@given(
+    graph_laplacian=spd_matrix_builder_float64,
+    kappa=st.floats(min_value=0.1, max_value=5, allow_nan=False, width=WIDTH),
+    alpha=st.floats(
+        min_value=SPD_SIZE / 2,
+        max_value=10,
+        exclude_min=True,
+        allow_nan=False,
+        width=WIDTH,
+    ),
+)
+def test_discrete_whittle_matern_fields_corr_is_spd(
+    graph_laplacian: array,
+    kappa: float,
+    alpha: float,
+) -> None:
+    """Test if discrete_whittle_matern_fields_corr results in SPD.
+
+    Parameters
+    ----------
+    graph_laplacian : array
+        SPD matrix.
+    kappa : float
+        Shifting factor applied to the spatial eigenvalues of the graph
+        Laplacian, must be positive.
+    alpha : float
+        Exponent controlling the fractional power of the transformed Laplacian,
+        must be positive. It has a linear relation with the smoothness.
+    """
+    graph_laplacian = jnp.asarray(graph_laplacian)
+
+    S, Q = jnp.linalg.eigh(jnp.asarray(graph_laplacian))
+
+    k = discrete_whittle_matern_fields_corr(
+        (S, Q),
+        kappa=kappa,
+        alpha=alpha,
+    )
+
+    eigenvals = jnp.linalg.eigvalsh(k)
+
+    assert jnp.all(eigenvals > 0)
+
+
+@no_type_check
+@settings(deadline=None, max_examples=MAX_EXAMPLES)
+@given(
+    graph_laplacian=spd_matrix_builder_float64,
+    kappa=st.floats(min_value=0.1, max_value=5, allow_nan=False, width=WIDTH),
+    alpha=st.floats(
+        min_value=SPD_SIZE / 2,
+        max_value=10,
+        exclude_min=True,
+        allow_nan=False,
+        width=WIDTH,
+    ),
+)
+def test_discrete_whittle_matern_fields_corr_normalization(
+    graph_laplacian: array,
+    kappa: float,
+    alpha: float,
+) -> None:
+    """Test normalization of discrete_whittle_matern_fields_corr.
+
+    Parameters
+    ----------
+    graph_laplacian : array
+        SPD matrix.
+    kappa : float
+        Shifting factor applied to the spatial eigenvalues of the graph
+        Laplacian, must be positive.
+    alpha : float
+        Exponent controlling the fractional power of the transformed Laplacian,
+        must be positive. It has a linear relation with the smoothness.
+    """
+    graph_laplacian = jnp.asarray(graph_laplacian)
+
+    S, Q = jnp.linalg.eigh(jnp.asarray(graph_laplacian))
+
+    k = discrete_whittle_matern_fields_corr(
+        (S, Q),
+        kappa=kappa,
+        alpha=alpha,
+    )
+
+    eigenvals = jnp.linalg.eigvalsh(k)
+
+    k_norm_abs = jnp.abs(k)
+
+    assert jnp.all(eigenvals > 0)
+
+    assert jnp.all((k_norm_abs < 1.0) | jnp.isclose(k_norm_abs, 1.0))
+
+    assert jnp.all(jnp.isclose(jnp.diagonal(k), 1.0))
