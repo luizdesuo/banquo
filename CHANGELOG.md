@@ -1,6 +1,27 @@
 # CHANGELOG
 
 
+## v0.7.0 (2025-03-30)
+
+### Bug Fixes
+
+- Modules namespace
+  ([`145f786`](https://github.com/luizdesuo/banquo/commit/145f786abcabae9f3deaf49daf794a3cbfa591c6))
+
+### Features
+
+- Add correlation matrix derived from matern fields approximation for graphs
+  ([`032e7c4`](https://github.com/luizdesuo/banquo/commit/032e7c41fdd7b13ce1a12ff221de5d717060c78f))
+
+### Testing
+
+- Add test for matern correlation
+  ([`6438b40`](https://github.com/luizdesuo/banquo/commit/6438b408b762434673145e2ffc64f9473baee594))
+
+- Fix test namespace from submodules
+  ([`44d5e21`](https://github.com/luizdesuo/banquo/commit/44d5e21e1f017d9686f65bc20da367dbc9c24884))
+
+
 ## v0.6.0 (2025-01-08)
 
 ### Build System
