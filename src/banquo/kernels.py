@@ -262,7 +262,7 @@ def discrete_whittle_matern_fields_corr(
     xp = array_namespace(Lambda, Q)  # Get the array API namespace
 
     squared_L_tilde = squared_fractional_graph_laplacian(  # noqa: N806
-        Lambda, kappa, alpha
+        Lambda, kappa, -alpha
     )
 
     # Compute normalizing factor
