@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.7.1 (2025-04-08)
+
+### Bug Fixes
+
+- Alpha signal for covariance is the opposite from precision
+  ([`25b10e7`](https://github.com/luizdesuo/banquo/commit/25b10e70e944b5a866d5aa768fac869ee12f20b7))
+
+
 ## v0.7.0 (2025-03-30)
 
 ### Bug Fixes
